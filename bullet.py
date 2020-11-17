@@ -25,3 +25,4 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             return True
         return False
+

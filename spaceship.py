@@ -1,5 +1,4 @@
 import pygame
-from parameters import settings as st
 from bullet import Bullet
 import time
 
@@ -7,7 +6,6 @@ import time
 class Spaceship(pygame.sprite.Sprite):
     def __init__(self, screen, settings):
         pygame.sprite.Sprite.__init__(self)
-
         self.file = settings.spaceship_path
         self.settings = settings
         self.image = pygame.image.load(self.file)

@@ -30,3 +30,9 @@ class settings:
     alien_path = 'imgs/alien.png'
     alien_size = (100, 100)
     alien_start_position = 100
+
+    alien_speed = 5
+    alien_speed_y = 25
+
+    LEFT = 1
+    RIGHT = -1
