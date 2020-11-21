@@ -4,15 +4,16 @@ from parameters import settings, colors
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, screen, ship):
+    def __init__(self, screen, ship, settings):
         pygame.sprite.Sprite.__init__(self)
         self.screen = screen
-        self.rect = pygame.Rect(0, 0, settings.bullet_width, settings.bullet_height)
+        self.settings = settings
+        self.rect = pygame.Rect(0, 0, self.settings.bullet_width, settings.bullet_height)
         self.rect.centerx = ship.rect.centerx
         self.rect.top = ship.rect.top
         self.y = float(self.rect.y)
         self.color = colors.BLUE
-        self.speed_factor = settings.bullet_speed
+        self.speed_factor = self.settings.bullet_speed
 
     def update(self):
         self.y -= self.speed_factor

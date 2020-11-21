@@ -17,11 +17,9 @@ class settings:
 
     FPS = 60
     spaceship_path = 'imgs/hiclipart.com.png'
-    spaceship_move_speed = 15
     SPRITE_PADDING = 20  # in pixels
 
     bullet_path = 'imgs/bullet.png'
-    bullet_speed = 10
     bullet_padding = 50
     bullet_width = 5
     bullet_height = 20
@@ -31,8 +29,25 @@ class settings:
     alien_size = (100, 100)
     alien_start_position = 100
 
-    alien_speed = 5
     alien_speed_y = 25
 
     LEFT = 1
     RIGHT = -1
+
+    button_width = 400
+    button_height = 100
+    button_font_size = 32
+
+    # dynamic settings
+    def __init__(self):
+        self.alien_speed = 5
+        self.bullet_speed = 10
+        self.spaceship_move_speed = 15
+
+        # multiplied factor
+        self.multiplied_factor = 1.5
+
+    def increase_speed(self):
+        self.alien_speed = self.alien_speed * self.multiplied_factor
+        self.bullet_speed = self.bullet_speed * self.multiplied_factor
+        self.spaceship_move_speed = self.spaceship_move_speed * self.multiplied_factor

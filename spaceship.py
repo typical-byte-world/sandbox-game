@@ -16,8 +16,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.rect.centerx = self.screen_rect.centerx
         self.rect.bottom = self.screen_rect.bottom
         self.bullets = []
-
-        self.last_bullet_shoot = time.time()
+        # self.last_bullet_shoot = time.time()
 
     def blitme(self):
         self.screen.blit(self.image, self.rect)

@@ -31,5 +31,8 @@ class Alien(pygame.sprite.Sprite):
         self.direction = self.direction * -1
         self.rect.y += self.settings.alien_speed_y
 
+    def check_bottom(self):
+        pass
+
 
 
