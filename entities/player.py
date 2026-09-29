@@ -1,33 +1,39 @@
 import pygame
 
 from settings import (
-    HEIGHT,
     WIDTH,
+    HEIGHT,
     PLAYER_COLOR,
     PLAYER_HEIGHT,
-    PLAYER_SPEED,
     PLAYER_WIDTH,
     PLAYER_ACCELERATION,
     PLAYER_MAX_SPEED,
-    PLAYER_DRAG
+    PLAYER_DRAG,
 )
 from entities.bullet import Bullet
 
 
-
 class Player:
     def __init__(self):
-        self.rect = pygame.Rect(
-            (WIDTH - PLAYER_WIDTH) // 2,
+        self.position = pygame.Vector2(
+            WIDTH / 2,
             HEIGHT - 60,
+        )
+
+        self.velocity = pygame.Vector2(0, 0)
+        self.acceleration = pygame.Vector2(0, 0)
+
+        self.rect = pygame.Rect(
+            0,
+            0,
             PLAYER_WIDTH,
             PLAYER_HEIGHT,
         )
 
-        self.velocity_x = 0.0
+        self.rect.center = self.position
+
         self.shoot_cooldown = 0
         self.shoot_delay = 0.2
-
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -40,26 +46,40 @@ class Player:
         if keys[pygame.K_RIGHT]:
             direction += 1
 
-        # Розгін
-        self.velocity_x += direction * PLAYER_ACCELERATION * dt
+        # Acceleration
+        self.acceleration.x = direction * PLAYER_ACCELERATION
 
-        # Максимальна швидкість
-        self.velocity_x = max(
+        # Velocity
+        self.velocity += self.acceleration * dt
+
+        self.velocity.x = max(
             -PLAYER_MAX_SPEED,
-            min(self.velocity_x, PLAYER_MAX_SPEED)
+            min(self.velocity.x, PLAYER_MAX_SPEED),
         )
 
-        # Якщо не натискаємо кнопку — гальмуємо
+        # Drag
         if direction == 0:
-            self.velocity_x *= PLAYER_DRAG ** (dt * 60)
+            self.velocity.x *= PLAYER_DRAG ** (dt * 60)
 
-        # Рух
-        self.rect.x += self.velocity_x * dt
+        # Position
+        self.position += self.velocity * dt
 
-        # Межі екрану
-        self.rect.clamp_ip(pygame.Rect(0, 0, WIDTH, HEIGHT))
+        # Keep inside screen
+        half_width = self.rect.width / 2
 
-        self.shoot_cooldown = max(0, self.shoot_cooldown - dt)
+        self.position.x = max(
+            half_width,
+            min(self.position.x, WIDTH - half_width),
+        )
+
+        # Sync collision rectangle with physical position
+        self.rect.center = self.position
+
+        # Shooting cooldown
+        self.shoot_cooldown = max(
+            0,
+            self.shoot_cooldown - dt,
+        )
 
     def shoot(self):
         if self.shoot_cooldown > 0:
@@ -68,10 +88,13 @@ class Player:
         self.shoot_cooldown = self.shoot_delay
 
         return Bullet(
-            self.rect.centerx,
+            self.position.x,
             self.rect.top,
         )
 
-
     def draw(self, screen):
-        pygame.draw.rect(screen, PLAYER_COLOR, self.rect)
+        pygame.draw.rect(
+            screen,
+            PLAYER_COLOR,
+            self.rect,
+        )
