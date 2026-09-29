@@ -1,24 +1,130 @@
-# Alien spaceships
-*The project is going to consist of 3 main components:*
-##### 1. The game - (player can move the spaceship, shoot enemies, collect data in automatic way)  
-  
-> The game is the core of the project. In the game, a player can play in two modes:  
-> by himself or by NN. When a player plays on his own the game can collect the data  
-> (screenshot for every pressed button). In the future, the game will be able to retrain  
-> a NN after a data collection process.
+# Alien invasion
 
-##### 2. A neural network that is going to be a self-driving spaceship
+### План
 
-> The neural network is going to be written in Pytorch.  
-> As input it gets a screenshot of the game and output  
-> will be a 5 classes - up, down, left, right or shoot.
+1. **Гра**
 
-##### 3. Neural network explainer in time.
-> Part of the game's screen is going to be dedicated to autopilot.
-> It will show the smth similar to SHAP value
+   * Переписати основу гри з нуля.
+   * Нові спрайти й анімації.
+   * Плавна нелінійна фізика руху player, куль і ворогів.
 
-Things to do now:
-- add different enemies and obstacles
-- refactor the project
-- collect data, process it
-- NN: train, evaluate, etc.
+2. **Вороги**
+
+   * 4–5 типів ворогів із різними тактиками.
+   * 3 боси з унікальними атаками та фазами.
+
+3. **AI Environment**
+
+   * Відокремити логіку гри від рендерингу.
+   * `GameState → Observation → Action`.
+   * Визначити дії агента: рух, стрільба тощо.
+
+4. **Навчання**
+
+   * Random → heuristic agent → evolutionary algorithm.
+   * Еволюціонувати neural network policy.
+   * Reward: виживання, знищення ворогів, шкода босам, отримана шкода.
+
+5. **Експерименти**
+
+   * Запускати багато ігор.
+   * Аналізувати, які стратегії агент сам знаходить.
+
+
+### Вороги
+
+1. **Scout**
+
+   * Швидкий.
+   * Рухається з різкими змінами напрямку.
+   * Періодично намагається обійти player.
+
+2. **Shooter**
+
+   * Повільний.
+   * Тримає дистанцію.
+   * Стріляє чергами з різними інтервалами.
+
+3. **Kamikaze**
+
+   * Виявляє player.
+   * Розганяється в його напрямку.
+   * Може коригувати траєкторію під час польоту.
+
+4. **Dodger**
+
+   * Реагує на кулі player.
+   * Намагається ухилитися.
+   * Після ухилення повертається до атаки.
+
+5. **Tactical**
+
+   * Аналізує позицію player та інших ворогів.
+   * Змінює поведінку залежно від ситуації.
+   * Може прикривати інших ворогів або створювати вигідні позиції для атаки.
+
+6. **Bosses ×3**
+
+   * Кожен має власну модель поведінки.
+   * Кілька фаз бою.
+   * Унікальні атаки та патерни руху.
+
+### Фізика
+
+* Усі рухомі об'єкти мають:
+
+  * `position`
+  * `velocity`
+  * `acceleration`
+
+* Рух не телепортує об'єкт, а поступово змінює швидкість:
+
+```text
+input → acceleration → velocity → position
+```
+
+* Додаємо `drag`, щоб об'єкти природно сповільнювалися.
+* Максимальна швидкість обмежена.
+* Рух може мати інерцію та зміну напрямку.
+* Кулі можуть мати різні типи траєкторій:
+
+  * пряма
+  * прискорення/гальмування
+  * дуга
+  * синусоїдна
+  * самонаведення
+
+**Мета:** рухи мають бути достатньо непередбачуваними для людини, але детермінованими й фізично зрозумілими для майбутнього AI.
+
+
+### Алгоритми
+
+1. **Random Agent**
+
+   * Випадковий рух і стрільба.
+   * Перевірка роботи environment.
+
+2. **Rule-Based Agent**
+
+   * Ручні правила: ухилятися, стріляти, тримати позицію.
+   * Базовий benchmark.
+
+3. **Neural Network Agent**
+
+   * `Observation → MLP → Action`.
+   * Навчання через еволюцію ваг.
+
+4. **Genetic Algorithm**
+
+   * Population → simulation → fitness → selection → mutation.
+   * Поступова еволюція кращих агентів.
+
+5. **Reinforcement Learning**
+
+   * `state → action → reward → next state`.
+   * Навчання стратегії без заданих правил.
+
+6. **Порівняння стратегій**
+
+   * Зіставляти агентів за survival time, score, damage та boss progress.
+   * Аналізувати, які тактики виникають під час навчання.
