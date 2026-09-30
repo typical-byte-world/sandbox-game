@@ -10,7 +10,8 @@ class GameStats:
         self.survival_time = 0.0
         self.wave = 1
         self.lives = 3
-
+        self.game_complete = False
+        
     @property
     def accuracy(self):
         if self.shots_fired == 0:

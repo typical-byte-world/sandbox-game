@@ -128,3 +128,8 @@ input → acceleration → velocity → position
 
    * Зіставляти агентів за survival time, score, damage та boss progress.
    * Аналізувати, які тактики виникають під час навчання.
+
+
+---
+
+- watchfiles "python main.py"

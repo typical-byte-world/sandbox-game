@@ -5,7 +5,14 @@ from entities.player import Player
 from entities.enemy import Enemy
 from stats import GameStats
 from hud.hud import HUD
-
+from entities.scout import Scout
+from wave_manager import WaveManager
+import random
+from entities.shooter import Shooter
+from entities.kamikaze import Kamikaze
+from entities.dodger import Dodger
+from entities.tactical import Tactical
+from entities.boss import Boss
 
 
 class Game:
@@ -23,13 +30,18 @@ class Game:
         self.player = Player()
 
         self.bullets = []
+        self.enemy_bullets = []
 
         self.enemies = [
-            Enemy(WIDTH // 4, 150),
         ]
 
+        self.boss = None
         self.stats = GameStats()
         self.hud = HUD()
+
+        self.wave_manager = WaveManager(self)
+
+        self.wave_manager.start_next_wave()
 
 
     def run(self):
@@ -48,10 +60,9 @@ class Game:
                 self.running = False
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r and self.game_over:
+                if event.key == pygame.K_r:
                     self.restart()
 
-            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     bullet = self.player.shoot()
 
@@ -63,14 +74,13 @@ class Game:
     def update(self, dt):
         if self.game_over:
             return
+
         self.stats.survival_time += dt
 
         self.player.update(dt)
 
-
         for bullet in self.bullets:
             bullet.update(dt)
-            
 
         self.bullets = [
             bullet
@@ -78,7 +88,33 @@ class Game:
             if bullet.rect.bottom > 0
         ]
 
+        for bullet in self.enemy_bullets:
+            bullet.update(dt)
+
+        self.enemy_bullets = [
+            bullet
+            for bullet in self.enemy_bullets
+            if bullet.rect.top < HEIGHT
+        ]
+
         for bullet in self.bullets[:]:
+            if self.boss and bullet.rect.colliderect(
+                self.boss.rect
+            ):
+                self.bullets.remove(bullet)
+
+                self.boss.take_damage(1)
+
+                self.stats.shots_hit += 1
+                self.stats.score += 25
+
+                if not self.boss.is_alive:
+                    self.stats.kills += 1
+                    self.stats.score += 1000
+                    self.boss = None
+
+                continue
+
             for enemy in self.enemies[:]:
                 if bullet.rect.colliderect(enemy.rect):
                     self.bullets.remove(bullet)
@@ -90,8 +126,13 @@ class Game:
 
                     break
 
-        for enemy in self.enemies:
-            enemy.update(dt)
+        for enemy in self.enemies[:]:
+            enemy.update(dt, self)
+
+            bullet = enemy.shoot()
+
+            if bullet:
+                self.enemy_bullets.append(bullet)
 
             if enemy.rect.colliderect(self.player.rect):
                 self.stats.lives -= 1
@@ -101,6 +142,36 @@ class Game:
                     self.game_over = True
 
                 break
+
+        for bullet in self.enemy_bullets[:]:
+            if bullet.rect.colliderect(self.player.rect):
+                self.enemy_bullets.remove(bullet)
+
+                self.stats.lives -= 1
+
+                if self.stats.lives <= 0:
+                    self.game_over = True
+
+                break
+
+        if self.boss:
+            self.boss.update(dt, self)
+
+            bullet = self.boss.shoot()
+
+            if bullet:
+                self.enemy_bullets.append(bullet)
+
+            if self.boss.rect.colliderect(
+                self.player.rect
+            ):
+                self.stats.lives -= 1
+
+                if self.stats.lives <= 0:
+                    self.game_over = True
+
+        self.wave_manager.update(dt)
+
 
 
     def draw(self):
@@ -114,6 +185,12 @@ class Game:
         for enemy in self.enemies:
             enemy.draw(self.screen)
 
+        if self.boss:
+            self.boss.draw(self.screen)
+
+        for bullet in self.enemy_bullets:
+            bullet.draw(self.screen)
+
         if self.game_over:
             self.hud.draw_game_over(
                 self.screen,
@@ -124,19 +201,83 @@ class Game:
                 self.screen,
                 self.stats,
             )
-        
+
         pygame.display.flip()
 
+
+    def spawn_enemy(self, enemy_type, color, wave):
+        margin = 100
+
+        x = random.randint(
+            margin,
+            WIDTH - margin,
+        )
+
+        y = random.randint(
+            50,
+            HEIGHT // 3,
+        )
+
+        if enemy_type == "scout":
+            enemy = Scout(
+                x,
+                y,
+                color,
+                wave,
+            )
+
+        elif enemy_type == "shooter":
+            enemy = Shooter(
+                x,
+                y,
+                color,
+                wave,
+            )
+
+        elif enemy_type == "kamikaze":
+            enemy = Kamikaze(
+                x,
+                y,
+                color,
+                wave,
+            )
+
+
+        elif enemy_type == "dodger":
+            enemy = Dodger(
+                x,
+                y,
+                color,
+                wave,
+            )
+
+        elif enemy_type == "tactical":
+            enemy = Tactical(
+                x,
+                y,
+                color,
+                wave,
+            )
+
+
+        else:
+            return
+
+        self.enemies.append(enemy)
 
     def restart(self):
         self.stats.reset()
 
+        self.game_over = False
+
         self.player = Player()
 
-        self.bullets.clear()
+        self.bullets = []
+        self.enemies = []
+        self.enemy_bullets = []
 
-        self.enemies = [
-            Enemy(WIDTH // 2, 150),
-        ]
+        self.wave_manager.current_wave = 0
+        self.wave_manager.spawn_queue = []
+        self.wave_manager.game_complete = False
 
-        self.game_over = False
+        self.wave_manager.start_next_wave()

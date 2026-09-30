@@ -1,6 +1,6 @@
 import pygame
 
-from settings import WIDTH
+from settings import WIDTH, HEIGHT
 
 
 class HUD:
@@ -26,20 +26,51 @@ class HUD:
             (255, 255, 255),
         )
 
-        screen.blit(score, (WIDTH * 0.05, 25))
+        screen.blit(score, (WIDTH * 0.1, 25))
 
         screen.blit(
             wave,
             # (WIDTH // 2 - wave.get_width() // 2, 25),
-            (WIDTH * 0.4, 25)
+            (WIDTH * 0.5, 25)
         )
 
         screen.blit(
             lives,
-            (WIDTH * 0.75, 25)
+            (WIDTH * 0.9, 25)
             # (WIDTH // 2 - lives.get_width() - 30, 25),
         )
         # screen.blit(lives, (800, 25))
+
+        if stats.game_complete:
+            title = self.font.render(
+                "ALL WAVES COMPLETE",
+                True,
+                (255, 255, 255),
+            )
+
+            restart = self.font.render(
+                "PRESS R TO RESTART",
+                True,
+                (180, 180, 180),
+            )
+
+            screen.blit(
+                title,
+                (
+                    WIDTH // 2 - title.get_width() // 2,
+                    HEIGHT // 2 - 40,
+                ),
+            )
+
+            screen.blit(
+                restart,
+                (
+                    WIDTH // 2 - restart.get_width() // 2,
+                    HEIGHT // 2 + 20,
+                ),
+            )
+
+            return
 
 
     def draw_game_over(self, screen, stats):
