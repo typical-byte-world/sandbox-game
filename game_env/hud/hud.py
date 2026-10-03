@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import WIDTH, HEIGHT
+from game_env.settings import WIDTH, HEIGHT
 
 
 class HUD:

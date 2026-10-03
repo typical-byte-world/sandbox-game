@@ -1,18 +1,18 @@
 import pygame
 
-from code.settings import BACKGROUND_COLOR, FPS, HEIGHT, WIDTH
-from code.entities.player import Player
-from code.entities.enemy import Enemy
-from code.stats import GameStats
-from code.hud.hud import HUD
-from code.entities.scout import Scout
-from code.wave_manager import WaveManager
+from game_env.settings import BACKGROUND_COLOR, FPS, HEIGHT, WIDTH
+from game_env.entities.player import Player
+from game_env.entities.enemy import Enemy
+from game_env.stats import GameStats
+from game_env.hud.hud import HUD
+from game_env.entities.enemies.scout import Scout
+from game_env.wave_manager import WaveManager
 import random
-from code.entities.shooter import Shooter
-from code.entities.kamikaze import Kamikaze
-from code.entities.dodger import Dodger
-from code.entities.tactical import Tactical
-from code.entities.boss import Boss
+from game_env.entities.enemies.shooter import Shooter
+from game_env.entities.enemies.kamikaze import Kamikaze
+from game_env.entities.enemies.dodger import Dodger
+from game_env.entities.enemies.tactical import Tactical
+from game_env.entities.bosses.boss import Boss
 
 
 class Game:
@@ -98,6 +98,8 @@ class Game:
         ]
 
         for bullet in self.bullets[:]:
+
+            # boss collision
             if self.boss and bullet.rect.colliderect(
                 self.boss.rect
             ):
@@ -115,6 +117,7 @@ class Game:
 
                 continue
 
+            # enemy collision
             for enemy in self.enemies[:]:
                 if bullet.rect.colliderect(enemy.rect):
                     self.bullets.remove(bullet)
@@ -259,6 +262,11 @@ class Game:
                 wave,
             )
 
+        # elif enemy_type == "boss1":
+        #     enemy = Boss1(
+        #         WIDTH // 2,
+        #         250
+        #     )
 
         else:
             return

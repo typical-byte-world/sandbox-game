@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import (
+from game_env.settings import (
     WIDTH,
     HEIGHT,
     SCOUT_MAX_SPEED,
@@ -8,7 +8,7 @@ from code.settings import (
     SCOUT_DRAG,
 )
 
-from code.pixel_art import (
+from game_env.pixel_art import (
     SCOUT_SPRITE,
     draw_pixel_sprite,
 )

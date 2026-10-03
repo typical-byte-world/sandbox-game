@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import (
+from game_env.settings import (
     WIDTH,
     HEIGHT,
     PLAYER_COLOR,
@@ -9,19 +9,13 @@ from code.settings import (
     PLAYER_ACCELERATION,
     PLAYER_MAX_SPEED,
     PLAYER_DRAG,
+    PLAYER_PIXEL_SIZE
 )
-from code.entities.bullet import Bullet
+from game_env.entities.bullet import Bullet
+from game_env.pixel_art import draw_pixel_sprite, PLAYER_SPRITE
 
-PLAYER_SPRITE = [
-    "     XX     ",
-    "    XXXX    ",
-    "   XXXXXX   ",
-    "  XX XX XX  ",
-    " XXXXXXXXXX ",
-    "XXXXXXXXXXXX",
-    "XX  XXXX  XX",
-    "    XXXX    ",
-]
+
+
 
 class Player:
     def __init__(self):
@@ -47,6 +41,8 @@ class Player:
         # Shooting
         self.shoot_cooldown = 0
         self.shoot_delay = 0.2
+
+        self.pixel_size = PLAYER_PIXEL_SIZE
 
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -152,18 +148,13 @@ class Player:
         )
 
     def draw(self, screen):
-        pixel_size = 4
+        draw_pixel_sprite(
+            screen,
+            PLAYER_SPRITE,
+            self.position,
+            self.pixel_size,
+            PLAYER_COLOR,
+        )
 
-        for row, line in enumerate(PLAYER_SPRITE):
-            for column, pixel in enumerate(line):
-                if pixel == "X":
-                    pygame.draw.rect(
-                        screen,
-                        PLAYER_COLOR,
-                        (
-                            self.rect.left + column * pixel_size,
-                            self.rect.top + row * pixel_size,
-                            pixel_size,
-                            pixel_size,
-                        ),
-                    )
+
+

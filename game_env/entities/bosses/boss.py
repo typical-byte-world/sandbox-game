@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import (
+from game_env.settings import (
     WIDTH,
     HEIGHT,
     BOSS_MAX_HEALTH,
@@ -15,16 +15,17 @@ from code.settings import (
     BOSS_DASH_DURATION,
 )
 
-from code.pixel_art import (
+from game_env.pixel_art import (
     BOSS_SPRITE,
     draw_pixel_sprite,
 )
 
-from code.entities.enemy_bullet import EnemyBullet
+from game_env.entities.enemy_bullet import EnemyBullet
 
 
 class Boss:
     def __init__(self, x, y):
+        name = "_boss1"
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.acceleration = pygame.Vector2(0, 0)

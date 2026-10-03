@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import BULLET_HEIGHT, BULLET_SPEED, BULLET_WIDTH
+from game_env.settings import BULLET_HEIGHT, BULLET_SPEED, BULLET_WIDTH
 
 
 class Bullet:

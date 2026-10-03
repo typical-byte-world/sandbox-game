@@ -1,12 +1,13 @@
-from code.entities.boss import Boss
-from code.settings import WIDTH
+from game_env.entities.bosses.boss import Boss
+from game_env.settings import WIDTH
 
 class WaveManager:
     WAVES = [
         {
             "color": (180, 180, 180),
             "enemies": {
-                "tactical": 1,
+                "boss1": 1,
+                # "tactical": 1,
                 # "dodger": 5,
                 # "scout": 1,
                 # "shooter": 1,

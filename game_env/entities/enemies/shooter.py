@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import (
+from game_env.settings import (
     WIDTH,
     HEIGHT,
     SHOOTER_MAX_SPEED,
@@ -11,12 +11,12 @@ from code.settings import (
     SHOOTER_SHOOT_DELAY,
 )
 
-from code.pixel_art import (
+from game_env.pixel_art import (
     SHOOTER_SPRITE,
     draw_pixel_sprite,
 )
 
-from code.entities.enemy_bullet import EnemyBullet
+from game_env.entities.enemy_bullet import EnemyBullet
 
 
 class Shooter:

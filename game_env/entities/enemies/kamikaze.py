@@ -1,6 +1,6 @@
 import pygame
 
-from code.settings import (
+from game_env.settings import (
     WIDTH,
     HEIGHT,
     KAMIKAZE_MAX_SPEED,
@@ -10,7 +10,7 @@ from code.settings import (
     KAMIKAZE_ATTACK_DISTANCE,
 )
 
-from code.pixel_art import (
+from game_env.pixel_art import (
     KAMIKAZE_SPRITE,
     draw_pixel_sprite,
 )

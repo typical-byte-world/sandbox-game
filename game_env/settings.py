@@ -6,7 +6,7 @@ HEIGHT = 1000
 FPS = 60
 
 BACKGROUND_COLOR = (10, 10, 10)
-PLAYER_COLOR = (255, 255, 255)
+PLAYER_COLOR = (230, 150, 90)
 
 
 # ============== PLAYER ============== #
@@ -18,7 +18,7 @@ PLAYER_ACCELERATION = 30000
 PLAYER_MAX_SPEED = 300
 PLAYER_DRAG = 0.85
 PLAYER_LIVES = 3
-
+PLAYER_PIXEL_SIZE = 4
 
 # ============== BULLET ============== #
 

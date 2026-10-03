@@ -28,6 +28,17 @@ def draw_pixel_sprite(
                     ),
                 )
 
+PLAYER_SPRITE = [
+    "     XX     ",
+    "    XXXX    ",
+    "   XXXXXX   ",
+    "  XX XX XX  ",
+    " XXXXXXXXXX ",
+    "XXXXXXXXXXXX",
+    "XX  XXXX  XX",
+    "    XXXX    ",
+]
+
 
 SCOUT_SPRITE = [
     "      XX      ",
