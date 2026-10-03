@@ -1,6 +1,6 @@
 import pygame
 
-from settings import (
+from code.settings import (
     WIDTH,
     HEIGHT,
     TACTICAL_MAX_SPEED,
@@ -13,12 +13,12 @@ from settings import (
     TACTICAL_SHOOT_DELAY,
 )
 
-from pixel_art import (
+from code.pixel_art import (
     TACTICAL_SPRITE,
     draw_pixel_sprite,
 )
 
-from entities.enemy_bullet import EnemyBullet
+from code.entities.enemy_bullet import EnemyBullet
 
 
 class Tactical:

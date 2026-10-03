@@ -132,4 +132,20 @@ input → acceleration → velocity → position
 
 ---
 
+
+# Agent
+
+1. Controller boundary
+2. Action space
+3. Observation space
+4. Random Agent
+5. Agent ↔ Game loop
+6. Evaluation / fitness
+7. Rule-based Agent
+8. Neural Network from NumPy
+9. Genetic Algorithm
+10. Reinforcement Learning
+
+
+
 - watchfiles "python main.py"

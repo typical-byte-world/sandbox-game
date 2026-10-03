@@ -1,6 +1,6 @@
 import pygame
 
-from settings import (
+from code.settings import (
     WIDTH,
     HEIGHT,
     DODGER_MAX_SPEED,
@@ -12,12 +12,12 @@ from settings import (
     DODGER_SHOOT_DELAY,
 )
 
-from pixel_art import (
+from code.pixel_art import (
     DODGER_SPRITE,
     draw_pixel_sprite,
 )
 
-from entities.enemy_bullet import EnemyBullet
+from code.entities.enemy_bullet import EnemyBullet
 
 
 class Dodger:

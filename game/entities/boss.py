@@ -1,6 +1,6 @@
 import pygame
 
-from settings import (
+from code.settings import (
     WIDTH,
     HEIGHT,
     BOSS_MAX_HEALTH,
@@ -15,12 +15,12 @@ from settings import (
     BOSS_DASH_DURATION,
 )
 
-from pixel_art import (
+from code.pixel_art import (
     BOSS_SPRITE,
     draw_pixel_sprite,
 )
 
-from entities.enemy_bullet import EnemyBullet
+from code.entities.enemy_bullet import EnemyBullet
 
 
 class Boss:

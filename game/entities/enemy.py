@@ -1,6 +1,6 @@
 import pygame
 
-from settings import (
+from code.settings import (
     WIDTH,
     HEIGHT,
     ENEMY_HEIGHT,

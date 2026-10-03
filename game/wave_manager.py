@@ -1,5 +1,5 @@
-from entities.boss import Boss
-from settings import WIDTH
+from code.entities.boss import Boss
+from code.settings import WIDTH
 
 class WaveManager:
     WAVES = [

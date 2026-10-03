@@ -1,6 +1,6 @@
 import pygame
 
-from settings import (
+from code.settings import (
     WIDTH,
     HEIGHT,
     PLAYER_COLOR,
@@ -10,7 +10,7 @@ from settings import (
     PLAYER_MAX_SPEED,
     PLAYER_DRAG,
 )
-from entities.bullet import Bullet
+from code.entities.bullet import Bullet
 
 PLAYER_SPRITE = [
     "     XX     ",

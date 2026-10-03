@@ -1,18 +1,18 @@
 import pygame
 
-from settings import BACKGROUND_COLOR, FPS, HEIGHT, WIDTH
-from entities.player import Player
-from entities.enemy import Enemy
-from stats import GameStats
-from hud.hud import HUD
-from entities.scout import Scout
-from wave_manager import WaveManager
+from code.settings import BACKGROUND_COLOR, FPS, HEIGHT, WIDTH
+from code.entities.player import Player
+from code.entities.enemy import Enemy
+from code.stats import GameStats
+from code.hud.hud import HUD
+from code.entities.scout import Scout
+from code.wave_manager import WaveManager
 import random
-from entities.shooter import Shooter
-from entities.kamikaze import Kamikaze
-from entities.dodger import Dodger
-from entities.tactical import Tactical
-from entities.boss import Boss
+from code.entities.shooter import Shooter
+from code.entities.kamikaze import Kamikaze
+from code.entities.dodger import Dodger
+from code.entities.tactical import Tactical
+from code.entities.boss import Boss
 
 
 class Game:
