@@ -13,6 +13,8 @@ from game_env.entities.enemies.kamikaze import Kamikaze
 from game_env.entities.enemies.dodger import Dodger
 from game_env.entities.enemies.tactical import Tactical
 from game_env.entities.bosses.boss import Boss
+from game_env.city import City
+
 
 
 class Game:
@@ -38,6 +40,7 @@ class Game:
         self.boss = None
         self.stats = GameStats()
         self.hud = HUD()
+        self.city = City()
 
         self.wave_manager = WaveManager(self)
 
@@ -114,6 +117,7 @@ class Game:
                     self.stats.kills += 1
                     self.stats.score += 1000
                     self.boss = None
+                    self.stats.game_complete = True
 
                 continue
 
@@ -179,6 +183,8 @@ class Game:
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
+
+        self.city.draw(self.screen)
 
         self.player.draw(self.screen)
 
@@ -262,12 +268,6 @@ class Game:
                 wave,
             )
 
-        # elif enemy_type == "boss1":
-        #     enemy = Boss1(
-        #         WIDTH // 2,
-        #         250
-        #     )
-
         else:
             return
 
@@ -283,6 +283,7 @@ class Game:
         self.bullets = []
         self.enemies = []
         self.enemy_bullets = []
+        self.boss = None
 
         self.wave_manager.current_wave = 0
         self.wave_manager.spawn_queue = []

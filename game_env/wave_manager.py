@@ -6,8 +6,7 @@ class WaveManager:
         {
             "color": (180, 180, 180),
             "enemies": {
-                "boss1": 1,
-                # "tactical": 1,
+                "tactical": 1,
                 # "dodger": 5,
                 # "scout": 1,
                 # "shooter": 1,

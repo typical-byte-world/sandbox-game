@@ -13,6 +13,8 @@ from game_env.settings import (
     BOSS_DASH_COOLDOWN,
     BOSS_DASH_SPEED,
     BOSS_DASH_DURATION,
+    BOSS_HP_BAR_HEIGHT,
+    BOSS_HP_BAR_WIDTH
 )
 
 from game_env.pixel_art import (
@@ -188,3 +190,30 @@ class Boss:
             self.pixel_size,
             self.color,
         )
+
+        # hp bar
+        x_bar_pos = self.position.x - (BOSS_HP_BAR_WIDTH // 2)
+        y_bar_pos = self.rect.top - BOSS_HP_BAR_HEIGHT - 10
+        adjusted_width = int(BOSS_HP_BAR_WIDTH * (self.health / self.max_health))
+
+        # фон
+        pygame.draw.rect(
+            screen,
+            (50, 50, 50),
+            (x_bar_pos, y_bar_pos, BOSS_HP_BAR_WIDTH, BOSS_HP_BAR_HEIGHT),
+        )
+        # hp
+        pygame.draw.rect(
+            screen,
+            (100, 100, 100),
+            (x_bar_pos, y_bar_pos, adjusted_width, BOSS_HP_BAR_HEIGHT),
+        )
+
+        # рамка
+        pygame.draw.rect(
+            screen,
+            (90, 250, 50),
+            (x_bar_pos, y_bar_pos, BOSS_HP_BAR_WIDTH, BOSS_HP_BAR_HEIGHT),
+            3
+        )
+

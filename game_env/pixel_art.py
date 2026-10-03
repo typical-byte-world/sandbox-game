@@ -113,8 +113,8 @@ TACTICAL_SPRITE = [
 
 
 BOSS_SPRITE = [
-    "....XXXXX....",
-    "...XXXXXXX...",
+    "XX..XXXXX..XX",
+    "XX.XXXXXXX.XX",
     "..XXXXXXXXX..",
     ".XXXXXXXXXXX.",
     "XXXXXXXXXXXXX",
@@ -125,4 +125,10 @@ BOSS_SPRITE = [
     "..XXXXXXXXX..",
     "...XXXXXXX...",
     "....XXXXX....",
+    "....XXXXX....",
+    ".....XXX.....",
+
+    # "....XXXXX....",
+    # "....XXXXX....",
+
 ]
