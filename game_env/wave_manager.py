@@ -6,29 +6,32 @@ class WaveManager:
         {
             "color": (180, 180, 180),
             "enemies": {
+                "scout": 2,
+                "shooter": 1,
+                "dodger": 2,
                 "tactical": 1,
-                # "dodger": 5,
-                # "scout": 1,
-                # "shooter": 1,
-                # "kamikaze": 1
             },
         },
-        # {
-        #     "color": (100, 180, 255),
-        #     "enemies": {
-        #         "scout": 2,
-        #         "shooter": 2,
-        #         "kamikaze": 2
-        #     },
-        # },
-        # {
-        #     "color": (255, 180, 80),
-        #     "enemies": {
-        #         "scout": 3,
-        #         "shooter": 3,
-        #         "kamikaze": 3
-        #     },
-        # },
+        {
+            "color": (80, 170, 255),
+            "enemies": {
+                "scout": 3,
+                "shooter": 2,
+                "dodger": 3,
+                "kamikaze": 2,
+                "tactical": 2,
+            },
+        },
+        {
+            "color": (255, 120, 70),
+            "enemies": {
+                "scout": 4,
+                "shooter": 3,
+                "dodger": 4,
+                "kamikaze": 3,
+                "tactical": 3,
+            },
+        },
     ]
 
     def __init__(self, game):
