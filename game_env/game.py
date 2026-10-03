@@ -1,19 +1,28 @@
 import pygame
+import random
 
-from game_env.settings import BACKGROUND_COLOR, FPS, HEIGHT, WIDTH
+from game_env.settings import (
+    BACKGROUND_COLOR,
+    FPS,
+    HEIGHT,
+    WIDTH,
+)
+
 from game_env.entities.player import Player
 from game_env.entities.enemy import Enemy
 from game_env.stats import GameStats
 from game_env.hud.hud import HUD
 from game_env.entities.enemies.scout import Scout
 from game_env.wave_manager import WaveManager
-import random
 from game_env.entities.enemies.shooter import Shooter
 from game_env.entities.enemies.kamikaze import Kamikaze
 from game_env.entities.enemies.dodger import Dodger
 from game_env.entities.enemies.tactical import Tactical
 from game_env.entities.bosses.boss import Boss
 from game_env.city import City
+from game_env.controllers.keyboard import KeyboardController
+from game_env.controllers.random import RandomController
+from game_env.agent.observation import Observation
 
 
 
@@ -26,26 +35,28 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.running = True
-
         self.game_over = False
 
         self.player = Player()
 
         self.bullets = []
         self.enemy_bullets = []
-
-        self.enemies = [
-        ]
+        self.enemies = []
 
         self.boss = None
+
         self.stats = GameStats()
         self.hud = HUD()
         self.city = City()
 
         self.wave_manager = WaveManager(self)
 
-        self.wave_manager.start_next_wave()
+        self.controller = KeyboardController()
+        # self.controller = RandomController()
 
+        self.observation = Observation()
+
+        self.wave_manager.start_next_wave()
 
     def run(self):
         while self.running:
@@ -66,19 +77,24 @@ class Game:
                 if event.key == pygame.K_r:
                     self.restart()
 
-                if event.key == pygame.K_SPACE:
-                    bullet = self.player.shoot()
-
-                    if bullet:
-                        self.bullets.append(bullet)
-                        self.stats.shots_fired += 1
-
-
     def update(self, dt):
+
         if self.game_over:
             return
 
+
         self.stats.survival_time += dt
+
+        action = self.controller.get_action()
+
+        self.player.apply_action(action)
+
+        if action.shoot:
+            bullet = self.player.shoot()
+
+            if bullet:
+                self.bullets.append(bullet)
+                self.stats.shots_fired += 1
 
         self.player.update(dt)
 
@@ -102,7 +118,7 @@ class Game:
 
         for bullet in self.bullets[:]:
 
-            # boss collision
+            # Boss collision
             if self.boss and bullet.rect.colliderect(
                 self.boss.rect
             ):
@@ -121,7 +137,7 @@ class Game:
 
                 continue
 
-            # enemy collision
+            # Enemy collision
             for enemy in self.enemies[:]:
                 if bullet.rect.colliderect(enemy.rect):
                     self.bullets.remove(bullet)
@@ -179,8 +195,6 @@ class Game:
 
         self.wave_manager.update(dt)
 
-
-
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
 
@@ -212,7 +226,6 @@ class Game:
             )
 
         pygame.display.flip()
-
 
     def spawn_enemy(self, enemy_type, color, wave):
         margin = 100
@@ -250,7 +263,6 @@ class Game:
                 color,
                 wave,
             )
-
 
         elif enemy_type == "dodger":
             enemy = Dodger(
