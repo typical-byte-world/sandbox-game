@@ -1,11 +1,13 @@
 import pygame
 import random
+import copy
 
 from game_env.settings import (
     BACKGROUND_COLOR,
     FPS,
     HEIGHT,
     WIDTH,
+    ZONES
 )
 
 from game_env.entities.player import Player
@@ -23,6 +25,8 @@ from game_env.city import City
 from game_env.controllers.keyboard import KeyboardController
 from game_env.controllers.random import RandomController
 from game_env.agent.observation import Observation
+from game_env.agent.agent import Agent
+from game_env.agent.reward import Reward
 
 
 
@@ -51,10 +55,15 @@ class Game:
 
         self.wave_manager = WaveManager(self)
 
-        self.controller = KeyboardController()
+        # self.controller = KeyboardController()
         # self.controller = RandomController()
+        self.controller = Agent()
 
         self.observation = Observation()
+
+        self.reward = Reward()
+
+        self.episode = 1
 
         self.wave_manager.start_next_wave()
 
@@ -77,17 +86,76 @@ class Game:
                 if event.key == pygame.K_r:
                     self.restart()
 
+    
     def update(self, dt):
-
         if self.game_over:
+            self.episode += 1
+            self.restart()
             return
 
+        previous_stats = copy.deepcopy(self.stats)
+        previous_x_player, previous_x_enemy = self._get_aim_positions()
+
+        state = self.observation.get_state(self)
+        action = self.controller.choose_action(state)
+
+        self._update_player(action, dt)
+        self._update_bullets(dt)
+        self._handle_player_bullet_collisions()
+        self._update_enemies(dt)
+        self._update_enemy_bullets()
+        self._update_boss(dt)
+
+        self.wave_manager.update(dt)
+
+        next_state = self.observation.get_state(self)
+        current_x_player, current_x_enemy = self._get_aim_positions()
+
+        reward = self.reward.calculate(
+            previous_stats,
+            self.stats,
+            previous_x_player,
+            previous_x_enemy,
+            current_x_player,
+            current_x_enemy,
+        )
+
+        self.controller.update_q_values(
+            state,
+            action,
+            reward,
+            next_state,
+        )
+
+        self._debug_step(reward)
+
+
+    def _get_closest_enemy(self):
+        if not self.enemies:
+            return None
+
+        return min(
+            self.enemies,
+            key=lambda enemy: enemy.position.distance_to(
+                self.player.position
+            ),
+        )
+
+
+    def _get_aim_positions(self):
+        player_x = self.player.position.x
+        closest_enemy = self._get_closest_enemy()
+
+        if closest_enemy is None:
+            return player_x, -1
+
+        return player_x, closest_enemy.position.x
+
+
+    def _update_player(self, action, dt):
+        self.player.apply_action(action)
 
         self.stats.survival_time += dt
-
-        action = self.controller.get_action()
-
-        self.player.apply_action(action)
 
         if action.shoot:
             bullet = self.player.shoot()
@@ -98,6 +166,8 @@ class Game:
 
         self.player.update(dt)
 
+
+    def _update_bullets(self, dt):
         for bullet in self.bullets:
             bullet.update(dt)
 
@@ -116,39 +186,56 @@ class Game:
             if bullet.rect.top < HEIGHT
         ]
 
+
+    def _handle_player_bullet_collisions(self):
         for bullet in self.bullets[:]:
-
-            # Boss collision
-            if self.boss and bullet.rect.colliderect(
-                self.boss.rect
-            ):
-                self.bullets.remove(bullet)
-
-                self.boss.take_damage(1)
-
-                self.stats.shots_hit += 1
-                self.stats.score += 25
-
-                if not self.boss.is_alive:
-                    self.stats.kills += 1
-                    self.stats.score += 1000
-                    self.boss = None
-                    self.stats.game_complete = True
-
+            if self._handle_boss_bullet_collision(bullet):
                 continue
 
-            # Enemy collision
-            for enemy in self.enemies[:]:
-                if bullet.rect.colliderect(enemy.rect):
-                    self.bullets.remove(bullet)
-                    self.enemies.remove(enemy)
+            self._handle_enemy_bullet_collision(bullet)
 
-                    self.stats.kills += 1
-                    self.stats.shots_hit += 1
-                    self.stats.score += 100
 
-                    break
+    def _handle_boss_bullet_collision(self, bullet):
+        if not self.boss:
+            return False
 
+        if not bullet.rect.colliderect(self.boss.rect):
+            return False
+
+        self.bullets.remove(bullet)
+
+        self.boss.take_damage(1)
+
+        self.stats.shots_hit += 1
+        self.stats.score += 25
+
+        if not self.boss.is_alive:
+            self.stats.kills += 1
+            self.stats.score += 1000
+            self.boss = None
+            self.stats.game_complete = True
+
+        return True
+
+
+    def _handle_enemy_bullet_collision(self, bullet):
+        for enemy in self.enemies[:]:
+            if not bullet.rect.colliderect(enemy.rect):
+                continue
+
+            self.bullets.remove(bullet)
+            self.enemies.remove(enemy)
+
+            self.stats.kills += 1
+            self.stats.shots_hit += 1
+            self.stats.score += 100
+
+            return True
+
+        return False
+
+
+    def _update_enemies(self, dt):
         for enemy in self.enemies[:]:
             enemy.update(dt, self)
 
@@ -166,34 +253,64 @@ class Game:
 
                 break
 
+
+    def _update_enemy_bullets(self):
         for bullet in self.enemy_bullets[:]:
-            if bullet.rect.colliderect(self.player.rect):
-                self.enemy_bullets.remove(bullet)
+            if not bullet.rect.colliderect(self.player.rect):
+                continue
 
-                self.stats.lives -= 1
+            self.enemy_bullets.remove(bullet)
 
-                if self.stats.lives <= 0:
-                    self.game_over = True
+            self.stats.lives -= 1
 
-                break
+            if self.stats.lives <= 0:
+                self.game_over = True
 
-        if self.boss:
-            self.boss.update(dt, self)
+            break
 
-            bullet = self.boss.shoot()
 
-            if bullet:
-                self.enemy_bullets.append(bullet)
+    def _update_boss(self, dt):
+        if not self.boss:
+            return
 
-            if self.boss.rect.colliderect(
-                self.player.rect
-            ):
-                self.stats.lives -= 1
+        self.boss.update(dt, self)
 
-                if self.stats.lives <= 0:
-                    self.game_over = True
+        bullet = self.boss.shoot()
 
-        self.wave_manager.update(dt)
+        if bullet:
+            self.enemy_bullets.append(bullet)
+
+        if self.boss.rect.colliderect(self.player.rect):
+            self.stats.lives -= 1
+
+            if self.stats.lives <= 0:
+                self.game_over = True
+
+
+    def _debug_step(self, reward):
+
+        if self.controller.steps % 500 != 0:
+            # if reward != 0:
+            #     print("REWARD:", reward)
+            return
+
+        print(
+            "episode:", self.episode,
+            "steps:", self.controller.steps,
+            "states:", len(self.controller.q_table),
+            "q_values", sum(
+                            len(actions)
+                            for actions in self.controller.q_table.values()
+                        ),
+            "max_q:", self.controller.get_max_q(),
+            "min_q:", self.controller.get_min_q(),
+        )
+
+        print(
+            "shots_hit:", self.stats.shots_hit,
+            "lives:", self.stats.lives,
+            "game_complete:", self.stats.game_complete,
+        )
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
@@ -225,7 +342,85 @@ class Game:
                 self.stats,
             )
 
+        self.draw_state_grid()
+
         pygame.display.flip()
+
+    def draw_state_grid(self):
+        cell_width = WIDTH / ZONES
+        cell_height = HEIGHT / ZONES
+
+        color = (60, 60, 60)
+
+        for column in range(ZONES + 1):
+            x = column * cell_width
+
+            pygame.draw.line(
+                self.screen,
+                color,
+                (x, 0),
+                (x, HEIGHT),
+            )
+
+        for row in range(ZONES + 1):
+            y = row * cell_height
+
+            pygame.draw.line(
+                self.screen,
+                color,
+                (0, y),
+                (WIDTH, y),
+            )
+
+        player_x, player_y, enemy_x, enemy_y, enemy_bullet_x, enemy_bullet_y, bullet_x, bullet_y = (
+            self.observation.get_state(self)
+        )
+
+        player_rect = pygame.Rect(
+            player_x * cell_width,
+            player_y * cell_height,
+            cell_width,
+            cell_height,
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            (50, 100, 255),
+            player_rect,
+            3,
+        )
+
+        if enemy_x != -1:
+            enemy_rect = pygame.Rect(
+                enemy_x * cell_width,
+                enemy_y * cell_height,
+                cell_width,
+                cell_height,
+            )
+
+            pygame.draw.rect(
+                self.screen,
+                (255, 60, 60),
+                enemy_rect,
+                3,
+            )
+
+        if enemy_bullet_x != -1:
+            bullet_rect = pygame.Rect(
+                enemy_bullet_x * cell_width,
+                enemy_bullet_y * cell_height,
+                cell_width,
+                cell_height,
+            )
+
+            pygame.draw.rect(
+                self.screen,
+                (255, 220, 50),
+                bullet_rect,
+                3,
+            )
+            
+
 
     def spawn_enemy(self, enemy_type, color, wave):
         margin = 100

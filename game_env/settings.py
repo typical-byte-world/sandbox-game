@@ -162,3 +162,24 @@ MIN_WINDOW_HEIGHT = 5
 MAX_WINDOW_HEIGHT = 12
 
 CITY_ALPHA = 80
+
+
+
+# ============== AGENT ============== #
+
+ZONES = 30
+EPSILON = 0.0
+ALPHA = 0.1
+GAMMA = 0.1
+
+
+# ============== REWARD ============== #
+
+ENEMY_HIT = 1
+LOST_LIFE = -5
+BOSS_DESTROY = 10
+DIE = -20
+NOTHIG_HAPPEN = 0
+SURVIVAL = 0.001
+AIM_REWARD = 0.01
+

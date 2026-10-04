@@ -6,19 +6,19 @@ class WaveManager:
         {
             "color": (180, 180, 180),
             "enemies": {
-                "scout": 2,
+                "scout": 1,
                 "shooter": 1,
-                "dodger": 2,
+                "dodger": 1,
                 "tactical": 1,
             },
         },
         {
             "color": (80, 170, 255),
             "enemies": {
-                "scout": 3,
-                "shooter": 2,
-                "dodger": 3,
-                "kamikaze": 2,
+                "scout": 5,
+                # "shooter": 2,
+                # "dodger": 3,
+                "kamikaze": 5,
                 "tactical": 2,
             },
         },
@@ -27,7 +27,7 @@ class WaveManager:
             "enemies": {
                 "scout": 4,
                 "shooter": 3,
-                "dodger": 4,
+                # "dodger": 4,
                 "kamikaze": 3,
                 "tactical": 3,
             },
