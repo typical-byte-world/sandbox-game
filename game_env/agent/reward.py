@@ -28,11 +28,11 @@ class Reward:
         previous_x_distance = abs(previous_x_player - previous_x_enemy)
         current_x_distance = abs(current_x_player - current_x_enemy)
 
-        if current_x_distance < previous_x_distance:
-            reward += self.aim_reward
+        # if current_x_distance < previous_x_distance:
+        #     reward += self.aim_reward
 
-        elif current_x_distance > previous_x_distance:
-            reward -= self.aim_reward
+        # elif current_x_distance > previous_x_distance:
+        #     reward -= self.aim_reward
 
         return reward
 

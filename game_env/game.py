@@ -24,10 +24,11 @@ from game_env.entities.bosses.boss import Boss
 from game_env.city import City
 from game_env.controllers.keyboard import KeyboardController
 from game_env.controllers.random import RandomController
-from game_env.agent.observation import Observation
+# from game_env.observations.discrete import Observation
+from game_env.observations.continious import Observation
 from game_env.agent.agent import Agent
 from game_env.agent.reward import Reward
-
+from game_env.agent.NeuralAgent import NeuralAgent
 
 
 class Game:
@@ -57,7 +58,8 @@ class Game:
 
         # self.controller = KeyboardController()
         # self.controller = RandomController()
-        self.controller = Agent()
+        # self.controller = Agent()
+        self.controller = NeuralAgent()
 
         self.observation = Observation()
 
@@ -96,7 +98,7 @@ class Game:
         previous_stats = copy.deepcopy(self.stats)
         previous_x_player, previous_x_enemy = self._get_aim_positions()
 
-        state = self.observation.get_state(self)
+        state = self.observation.get_vector(self)
         action = self.controller.choose_action(state)
 
         self._update_player(action, dt)
@@ -108,7 +110,7 @@ class Game:
 
         self.wave_manager.update(dt)
 
-        next_state = self.observation.get_state(self)
+        next_state = self.observation.get_vector(self)
         current_x_player, current_x_enemy = self._get_aim_positions()
 
         reward = self.reward.calculate(
@@ -239,10 +241,11 @@ class Game:
         for enemy in self.enemies[:]:
             enemy.update(dt, self)
 
-            bullet = enemy.shoot()
+            if isinstance(enemy, Shooter):
+                bullet = enemy.shoot(self.player.position)
 
-            if bullet:
-                self.enemy_bullets.append(bullet)
+                if bullet:
+                    self.enemy_bullets.append(bullet)
 
             if enemy.rect.colliderect(self.player.rect):
                 self.stats.lives -= 1
@@ -289,21 +292,15 @@ class Game:
 
     def _debug_step(self, reward):
 
-        if self.controller.steps % 500 != 0:
-            # if reward != 0:
-            #     print("REWARD:", reward)
+        if self.controller.steps % 200 != 0:
             return
+
+        observation = self.observation.get_observation(self)
+        
 
         print(
             "episode:", self.episode,
             "steps:", self.controller.steps,
-            "states:", len(self.controller.q_table),
-            "q_values", sum(
-                            len(actions)
-                            for actions in self.controller.q_table.values()
-                        ),
-            "max_q:", self.controller.get_max_q(),
-            "min_q:", self.controller.get_min_q(),
         )
 
         print(
@@ -311,6 +308,28 @@ class Game:
             "lives:", self.stats.lives,
             "game_complete:", self.stats.game_complete,
         )
+
+        print(
+            'player_x', observation['player_x'],
+            'player_y', observation['player_y'],
+
+            'player_bullet_present', observation['player_bullet_present'],
+            'player_bullet_dx', observation['player_bullet_dx'],
+            'player_bullet_dy', observation['player_bullet_dy'],
+
+            'enemy_present', observation['enemy_present'],
+            'enemy_dx', observation['enemy_dx'],
+            'enemy_dy', observation['enemy_dy'],
+
+
+            'enemy_bullet_present', observation['enemy_bullet_present'],
+            'enemy_bullet_dx', observation['enemy_bullet_dx'],
+            'enemy_bullet_dy', observation['enemy_bullet_dy'],
+            '---' * 10
+        )
+
+        print(self.observation.get_vector(self))
+
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
@@ -342,83 +361,83 @@ class Game:
                 self.stats,
             )
 
-        self.draw_state_grid()
+        # self.draw_state_grid()
 
         pygame.display.flip()
 
-    def draw_state_grid(self):
-        cell_width = WIDTH / ZONES
-        cell_height = HEIGHT / ZONES
+    # def draw_state_grid(self):
+    #     cell_width = WIDTH / ZONES
+    #     cell_height = HEIGHT / ZONES
 
-        color = (60, 60, 60)
+    #     color = (60, 60, 60)
 
-        for column in range(ZONES + 1):
-            x = column * cell_width
+    #     for column in range(ZONES + 1):
+    #         x = column * cell_width
 
-            pygame.draw.line(
-                self.screen,
-                color,
-                (x, 0),
-                (x, HEIGHT),
-            )
+    #         pygame.draw.line(
+    #             self.screen,
+    #             color,
+    #             (x, 0),
+    #             (x, HEIGHT),
+    #         )
 
-        for row in range(ZONES + 1):
-            y = row * cell_height
+    #     for row in range(ZONES + 1):
+    #         y = row * cell_height
 
-            pygame.draw.line(
-                self.screen,
-                color,
-                (0, y),
-                (WIDTH, y),
-            )
+    #         pygame.draw.line(
+    #             self.screen,
+    #             color,
+    #             (0, y),
+    #             (WIDTH, y),
+    #         )
 
-        player_x, player_y, enemy_x, enemy_y, enemy_bullet_x, enemy_bullet_y, bullet_x, bullet_y = (
-            self.observation.get_state(self)
-        )
+    #     # player_x, player_y, enemy_x, enemy_y, enemy_bullet_x, enemy_bullet_y, bullet_x, bullet_y = (
+    #     #     self.observation.get_state(self)
+    #     # )
 
-        player_rect = pygame.Rect(
-            player_x * cell_width,
-            player_y * cell_height,
-            cell_width,
-            cell_height,
-        )
+    #     player_rect = pygame.Rect(
+    #         player_x * cell_width,
+    #         player_y * cell_height,
+    #         cell_width,
+    #         cell_height,
+    #     )
 
-        pygame.draw.rect(
-            self.screen,
-            (50, 100, 255),
-            player_rect,
-            3,
-        )
+    #     pygame.draw.rect(
+    #         self.screen,
+    #         (50, 100, 255),
+    #         player_rect,
+    #         3,
+    #     )
 
-        if enemy_x != -1:
-            enemy_rect = pygame.Rect(
-                enemy_x * cell_width,
-                enemy_y * cell_height,
-                cell_width,
-                cell_height,
-            )
+    #     if enemy_x != -1:
+    #         enemy_rect = pygame.Rect(
+    #             enemy_x * cell_width,
+    #             enemy_y * cell_height,
+    #             cell_width,
+    #             cell_height,
+    #         )
 
-            pygame.draw.rect(
-                self.screen,
-                (255, 60, 60),
-                enemy_rect,
-                3,
-            )
+    #         pygame.draw.rect(
+    #             self.screen,
+    #             (255, 60, 60),
+    #             enemy_rect,
+    #             3,
+    #         )
 
-        if enemy_bullet_x != -1:
-            bullet_rect = pygame.Rect(
-                enemy_bullet_x * cell_width,
-                enemy_bullet_y * cell_height,
-                cell_width,
-                cell_height,
-            )
+    #     if enemy_bullet_x != -1:
+    #         bullet_rect = pygame.Rect(
+    #             enemy_bullet_x * cell_width,
+    #             enemy_bullet_y * cell_height,
+    #             cell_width,
+    #             cell_height,
+    #         )
 
-            pygame.draw.rect(
-                self.screen,
-                (255, 220, 50),
-                bullet_rect,
-                3,
-            )
+    #         pygame.draw.rect(
+    #             self.screen,
+    #             (255, 220, 50),
+    #             bullet_rect,
+    #             3,
+    #         )
             
 
 

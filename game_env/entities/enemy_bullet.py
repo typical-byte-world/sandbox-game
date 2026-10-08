@@ -8,9 +8,9 @@ from game_env.settings import (
 
 
 class EnemyBullet:
-    def __init__(self, x, y):
+    def __init__(self, x, y, direction):
         self.position = pygame.Vector2(x, y)
-        self.velocity = pygame.Vector2(0, ENEMY_BULLET_SPEED)
+        self.velocity = direction * ENEMY_BULLET_SPEED
 
         self.rect = pygame.Rect(
             0,

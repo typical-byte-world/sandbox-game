@@ -15,9 +15,9 @@ class WaveManager:
         {
             "color": (80, 170, 255),
             "enemies": {
-                "scout": 5,
-                # "shooter": 2,
-                # "dodger": 3,
+                "scout": 2,
+                "shooter": 2,
+                "dodger": 3,
                 "kamikaze": 5,
                 "tactical": 2,
             },

@@ -183,3 +183,11 @@ NOTHIG_HAPPEN = 0
 SURVIVAL = 0.001
 AIM_REWARD = 0.01
 
+# ============== NETWORK ============== #
+
+INPUT_SIZE = 11
+
+
+
+
+
