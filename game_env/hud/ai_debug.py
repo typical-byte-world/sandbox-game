@@ -24,6 +24,12 @@ class AIDebug:
 
         history = data["history"]
 
+        q_before_update = data["q_before_update"]
+        target_q = data["target_q"]
+        q_after_update = data["q_after_update"]
+
+        right_x = 1050
+
         self._draw_graph(
             screen,
             history.rewards,
@@ -54,8 +60,6 @@ class AIDebug:
             "MAX Q",
         )
 
-        right_x = 1050
-
         title = self.font.render(
             "AI DEBUG",
             True,
@@ -67,26 +71,45 @@ class AIDebug:
             (right_x, 20),
         )
 
+        self._draw_policy(
+            screen,
+            data["epsilon"],
+            data["exploration"],
+            right_x,
+            55,
+        )
+
+        self._draw_training_step(
+            screen,
+            q_before_update,
+            target_q,
+            q_after_update,
+            right_x,
+            125,
+        )
+
         if observation is not None:
             self._draw_observation(
                 screen,
                 observation,
                 right_x,
-                55,
+                225,
             )
 
         self._draw_q_values(
             screen,
             q_values,
+            data["actions"],
+            data["action_index"],
             right_x,
-            310,
+            480,
         )
 
         self._draw_hidden(
             screen,
             hidden,
             right_x,
-            690,
+            850,
         )
 
         self._draw_weights(
@@ -120,6 +143,99 @@ class AIDebug:
             450,
             "GRADIENTS 2",
         )
+
+    def _draw_policy(
+        self,
+        screen,
+        epsilon,
+        exploration,
+        x,
+        y,
+    ):
+        label = self.small_font.render(
+            "POLICY",
+            True,
+            (200, 200, 200),
+        )
+
+        screen.blit(
+            label,
+            (x, y),
+        )
+
+        epsilon_text = self.small_font.render(
+            f"epsilon = {epsilon:.3f}",
+            True,
+            (220, 220, 220),
+        )
+
+        screen.blit(
+            epsilon_text,
+            (x, y + 22),
+        )
+
+        mode = (
+            "EXPLORATION"
+            if exploration
+            else "EXPLOITATION"
+        )
+
+        mode_color = (
+            (255, 180, 80)
+            if exploration
+            else (120, 220, 120)
+        )
+
+        mode_text = self.small_font.render(
+            f"mode = {mode}",
+            True,
+            mode_color,
+        )
+
+        screen.blit(
+            mode_text,
+            (x, y + 44),
+        )
+
+    def _draw_training_step(
+        self,
+        screen,
+        q_before,
+        target,
+        q_after,
+        x,
+        y,
+    ):
+        label = self.small_font.render(
+            "TRAINING STEP",
+            True,
+            (200, 200, 200),
+        )
+
+        screen.blit(
+            label,
+            (x, y),
+        )
+
+        values = [
+            ("Q BEFORE", q_before),
+            ("TARGET", target),
+            ("Q AFTER", q_after),
+        ]
+
+        for i, (name, value) in enumerate(values):
+            row_y = y + 20 + i * 22
+
+            text = self.small_font.render(
+                f"{name:12} {value:8.4f}",
+                True,
+                (220, 220, 220),
+            )
+
+            screen.blit(
+                text,
+                (x, row_y),
+            )
 
     def _draw_observation(
         self,
@@ -198,11 +314,13 @@ class AIDebug:
         self,
         screen,
         q_values,
+        actions,
+        selected_action_index,
         x,
         y,
     ):
         label = self.small_font.render(
-            "Q-VALUES",
+            "Q-VALUES / ACTIONS",
             True,
             (200, 200, 200),
         )
@@ -221,11 +339,25 @@ class AIDebug:
             row_y = y + 25 + i * 20
 
             value = float(value)
+            action = actions[i]
+
+            shoot = "S" if action.shoot else "-"
+
+            action_text = (
+                f"{action.move_x:+d},"
+                f"{action.move_y:+d},"
+                f"{shoot}"
+            )
+
+            if i == selected_action_index:
+                text_color = (255, 220, 80)
+            else:
+                text_color = (220, 220, 220)
 
             text = self.small_font.render(
-                f"{i:02d} {value:7.3f}",
+                f"{i:02d} [{action_text}] {value:7.3f}",
                 True,
-                (220, 220, 220),
+                text_color,
             )
 
             screen.blit(
@@ -246,7 +378,7 @@ class AIDebug:
                     DEBUG_ALPHA,
                 ),
                 (
-                    x + 80,
+                    x + 145,
                     row_y + 2,
                     bar_width,
                     10,
