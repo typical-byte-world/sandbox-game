@@ -29,6 +29,9 @@ from game_env.observations.continious import Observation
 from game_env.agent.agent import Agent
 from game_env.agent.reward import Reward
 from game_env.agent.NeuralAgent import NeuralAgent
+from game_env.hud.ai_debug import AIDebug
+
+
 
 
 class Game:
@@ -64,6 +67,8 @@ class Game:
         self.observation = Observation()
 
         self.reward = Reward()
+
+        self.ai_debug = AIDebug()
 
         self.episode = 1
 
@@ -360,85 +365,14 @@ class Game:
                 self.screen,
                 self.stats,
             )
-
-        # self.draw_state_grid()
-
+            
+        if isinstance(self.controller, NeuralAgent):
+            self.ai_debug.draw(
+                self.screen,
+                self.controller,
+            )
         pygame.display.flip()
 
-    # def draw_state_grid(self):
-    #     cell_width = WIDTH / ZONES
-    #     cell_height = HEIGHT / ZONES
-
-    #     color = (60, 60, 60)
-
-    #     for column in range(ZONES + 1):
-    #         x = column * cell_width
-
-    #         pygame.draw.line(
-    #             self.screen,
-    #             color,
-    #             (x, 0),
-    #             (x, HEIGHT),
-    #         )
-
-    #     for row in range(ZONES + 1):
-    #         y = row * cell_height
-
-    #         pygame.draw.line(
-    #             self.screen,
-    #             color,
-    #             (0, y),
-    #             (WIDTH, y),
-    #         )
-
-    #     # player_x, player_y, enemy_x, enemy_y, enemy_bullet_x, enemy_bullet_y, bullet_x, bullet_y = (
-    #     #     self.observation.get_state(self)
-    #     # )
-
-    #     player_rect = pygame.Rect(
-    #         player_x * cell_width,
-    #         player_y * cell_height,
-    #         cell_width,
-    #         cell_height,
-    #     )
-
-    #     pygame.draw.rect(
-    #         self.screen,
-    #         (50, 100, 255),
-    #         player_rect,
-    #         3,
-    #     )
-
-    #     if enemy_x != -1:
-    #         enemy_rect = pygame.Rect(
-    #             enemy_x * cell_width,
-    #             enemy_y * cell_height,
-    #             cell_width,
-    #             cell_height,
-    #         )
-
-    #         pygame.draw.rect(
-    #             self.screen,
-    #             (255, 60, 60),
-    #             enemy_rect,
-    #             3,
-    #         )
-
-    #     if enemy_bullet_x != -1:
-    #         bullet_rect = pygame.Rect(
-    #             enemy_bullet_x * cell_width,
-    #             enemy_bullet_y * cell_height,
-    #             cell_width,
-    #             cell_height,
-    #         )
-
-    #         pygame.draw.rect(
-    #             self.screen,
-    #             (255, 220, 50),
-    #             bullet_rect,
-    #             3,
-    #         )
-            
 
 
     def spawn_enemy(self, enemy_type, color, wave):

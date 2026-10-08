@@ -1,8 +1,8 @@
 import random
-
 import numpy as np
 
 from game_env.agent.network import NeuralNet
+from game_env.agent.training_history import TrainingHistory
 from game_env.controllers.action import Action
 from game_env.settings import EPSILON, ALPHA, GAMMA
 
@@ -10,12 +10,25 @@ from game_env.settings import EPSILON, ALPHA, GAMMA
 class NeuralAgent:
     def __init__(self):
         self.network = NeuralNet()
+
         self.epsilon = EPSILON
         self.alpha = ALPHA
         self.gamma = GAMMA
+
         self.steps = 0
 
         self.actions = Action.all_actions()
+
+        self.last_current_q = 0.0
+        self.last_target_q = 0.0
+        self.last_td_error = 0.0
+        self.last_reward = 0.0
+        self.last_loss = 0.0
+        self.last_action_index = 0
+
+        self.last_observation = None
+
+        self.history = TrainingHistory()
 
     def choose_action(self, state):
         q_values = self.network.forward(state)
@@ -25,7 +38,9 @@ class NeuralAgent:
 
         max_q = np.max(q_values)
 
-        best_indices = np.flatnonzero(q_values == max_q)
+        best_indices = np.flatnonzero(
+            q_values == max_q
+        )
 
         action_index = random.choice(best_indices)
 
@@ -40,17 +55,25 @@ class NeuralAgent:
     ):
         self.steps += 1
 
+        self.last_observation = state.copy()
+
         q_values = self.network.forward(state)
 
         action_index = self.actions.index(action)
 
-        # current_q = q_values[action_index]
+        current_q = q_values[action_index]
 
         next_q_values = self.network.forward(next_state)
 
         max_next_q = np.max(next_q_values)
 
         target = reward + self.gamma * max_next_q
+
+        self.last_current_q = current_q
+        self.last_target_q = target
+        self.last_td_error = target - current_q
+        self.last_reward = reward
+        self.last_action_index = action_index
 
         loss = self.network.train(
             state,
@@ -59,4 +82,30 @@ class NeuralAgent:
             self.alpha,
         )
 
+        self.last_loss = loss
+
+        self.history.add(
+            reward,
+            loss,
+            np.max(q_values),
+        )
+
         return loss
+
+    def get_debug_data(self):
+        return {
+            "observation": self.last_observation,
+            "q_values": self.network.last_q_values,
+            "hidden": self.network.last_a1,
+            "weights1": self.network.weights1,
+            "weights2": self.network.weights2,
+            "current_q": self.last_current_q,
+            "target_q": self.last_target_q,
+            "td_error": self.last_td_error,
+            "reward": self.last_reward,
+            "loss": self.last_loss,
+            "action_index": self.last_action_index,
+            "history": self.history,
+            "gradient_weights1": self.network.last_gradient_weights1,
+            "gradient_weights2": self.network.last_gradient_weights2,
+        }

@@ -28,11 +28,23 @@ class NeuralNet:
         )
         self.bias2 = np.zeros(output_size)
 
+
+        self.last_z1 = None
+        self.last_a1 = None
+        self.last_q_values = None
+
+        self.last_gradient_weights1 = None
+        self.last_gradient_weights2 = None
+
     def forward(self, x):
         z1 = np.dot(self.weights1, x) + self.bias1
         a1 = np.maximum(0, z1)
 
         z2 = np.dot(self.weights2, a1) + self.bias2
+
+        self.last_z1 = z1
+        self.last_a1 = a1
+        self.last_q_values = z2
 
         return z2
 
@@ -76,6 +88,8 @@ class NeuralNet:
         self.weights1 -= learning_rate * gradient_weights1
         self.bias1 -= learning_rate * gradient_bias1
 
+        self.last_gradient_weights1 = gradient_weights1
+        self.last_gradient_weights2 = gradient_weights2
         return loss
 
 
