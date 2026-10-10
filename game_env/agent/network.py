@@ -10,7 +10,7 @@ class NeuralNet:
         self,
         input_size=11,
         hidden_size=16,
-        output_size=18,
+        output_size=4,
     ):
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -38,7 +38,7 @@ class NeuralNet:
 
     def forward(self, x):
         z1 = np.dot(self.weights1, x) + self.bias1
-        a1 = np.maximum(0, z1)
+        a1 = np.where(z1 > 0, z1, 0.01 * z1)
 
         z2 = np.dot(self.weights2, a1) + self.bias2
 
@@ -50,7 +50,7 @@ class NeuralNet:
 
     def train(self, x, action_index, target, learning_rate):
         z1 = np.dot(self.weights1, x) + self.bias1
-        a1 = np.maximum(0, z1)
+        a1 = np.where(z1 > 0, z1, 0.01 * z1)
 
         q_values = np.dot(self.weights2, a1) + self.bias2
 
@@ -73,8 +73,11 @@ class NeuralNet:
             gradient_output,
         )
 
-        gradient_z1 = gradient_a1 * (z1 > 0)
-
+        gradient_z1 = gradient_a1 * np.where(
+            z1 > 0,
+            1.0,
+            0.01,
+        )
         gradient_weights1 = np.outer(
             gradient_z1,
             x,

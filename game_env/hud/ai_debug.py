@@ -109,7 +109,7 @@ class AIDebug:
             screen,
             hidden,
             right_x,
-            850,
+            870,
         )
 
         self._draw_weights(

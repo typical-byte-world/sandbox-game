@@ -168,9 +168,9 @@ CITY_ALPHA = 80
 # ============== AGENT ============== #
 
 ZONES = 30
-EPSILON = 0.0
+EPSILON = 0.2
 ALPHA = 0.1
-GAMMA = 0.1
+GAMMA = 0.99
 
 
 # ============== REWARD ============== #

@@ -7,7 +7,7 @@ class KeyboardController:
     def __init__(self):
         ...
 
-    def get_action(self):
+    def choose_action(self, state=None):
         keys = pygame.key.get_pressed()
 
         move_x, move_y, shoot = 0, 0, False
