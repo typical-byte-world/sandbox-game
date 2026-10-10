@@ -6,12 +6,25 @@ from training.runner import ExperimentRunner
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Space Invaders RL experiments"
+        description="Space Invaders RL Experiments"
+    )
+
+    parser.add_argument(
+        "--env",
+        choices=[
+            "space-invaders",
+            "simple-target",
+        ],
+        default="space-invaders",
     )
 
     parser.add_argument(
         "--mode",
-        choices=["train", "evaluate", "random"],
+        choices=[
+            "train",
+            "evaluate",
+            "random",
+        ],
         default="random",
     )
 
@@ -44,15 +57,28 @@ def main():
         action="store_true",
     )
 
+    parser.add_argument(
+        "--reward-shaping",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--shaping-scale",
+        type=float,
+        default=1.0,
+    )
     args = parser.parse_args()
 
     runner = ExperimentRunner(
         mode=args.mode,
+        environment=args.env,
         episodes=args.episodes,
         max_steps=args.max_steps,
         seed=args.seed,
         experiment_name=args.experiment,
         render=args.render,
+        reward_shaping=args.reward_shaping,
+        shaping_scale=args.shaping_scale,
     )
 
     runner.run()

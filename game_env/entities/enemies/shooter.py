@@ -93,15 +93,14 @@ class Shooter:
             self.shoot_cooldown - dt,
         )
 
+
     def shoot(self, target_position):
         if self.shoot_cooldown > 0:
             return None
 
-        self.shoot_cooldown = SHOOTER_SHOOT_DELAY
-
-        direction = pygame.Vector2(
-            target_position.x - self.position.x,
-            target_position.y - self.position.y,
+        direction = (
+            pygame.Vector2(target_position)
+            - self.position
         )
 
         if direction.length_squared() == 0:
@@ -109,11 +108,14 @@ class Shooter:
 
         direction = direction.normalize()
 
+        self.shoot_cooldown = SHOOTER_SHOOT_DELAY
+
         return EnemyBullet(
             self.position.x,
             self.rect.bottom,
             direction,
         )
+
 
     def handle_screen_collision(self):
         half_width = self.rect.width / 2

@@ -1,6 +1,11 @@
+
 import pygame
 
-from game_env.settings import BULLET_HEIGHT, BULLET_SPEED, BULLET_WIDTH
+from game_env.settings import (
+    BULLET_HEIGHT,
+    BULLET_SPEED,
+    BULLET_WIDTH,
+)
 
 
 class Bullet:
@@ -15,10 +20,15 @@ class Bullet:
             BULLET_HEIGHT,
         )
 
+        self.rect.center = self.position
+
     def update(self, dt):
         self.position += self.velocity * dt
-
         self.rect.center = self.position
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (255, 255, 255), self.rect)
+        pygame.draw.rect(
+            screen,
+            (255, 255, 255),
+            self.rect,
+        )

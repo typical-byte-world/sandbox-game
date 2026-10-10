@@ -144,27 +144,28 @@ class Boss:
                     BOSS_MAX_SPEED
                 )
 
+
     def shoot(self, game):
         if self.shoot_cooldown > 0:
             return None
 
-        self.shoot_cooldown = BOSS_SHOOT_DELAY
-
-        direction = pygame.Vector2(
-            game.player.position.x - self.position.x,
-            game.player.position.y - self.position.y,
+        direction = (
+            game.player.position - self.position
         )
+
         if direction.length_squared() == 0:
             return None
 
         direction = direction.normalize()
 
+        self.shoot_cooldown = BOSS_SHOOT_DELAY
 
         return EnemyBullet(
             self.position.x,
             self.rect.bottom,
-            direction
+            direction,
         )
+
 
     def take_damage(self, damage):
         self.health -= damage

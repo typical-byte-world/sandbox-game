@@ -16,16 +16,31 @@ from game_env.entities.enemies.tactical import Tactical
 
 from game_env.stats import GameStats
 from game_env.wave_manager import WaveManager
-from game_env.observations.continious import Observation
+from game_env.observations.full_state import (
+    FullStateObservation,
+    ObservationConfig,
+)
 from game_env.agent.reward import Reward
-
+from game_env.entities.enemies.shooter import Shooter
+from game_env.entities.enemies.dodger import Dodger
+from game_env.entities.enemies.tactical import Tactical
 
 class SpaceInvadersEnv(Environment):
     def __init__(self, max_steps=None):
         self.dt = 1.0 / FPS
         self.max_steps = max_steps
 
-        self.observation = Observation()
+        self.observation = FullStateObservation(
+            ObservationConfig(
+                max_enemies=20,
+                max_player_bullets=30,
+                max_enemy_bullets=30,
+                max_lives=3,
+                max_waves=1,
+                max_episode_steps=max_steps or 3600,
+            )
+        )
+
         self.reward = Reward()
 
         self.wave_manager = WaveManager(self)
@@ -241,14 +256,20 @@ class SpaceInvadersEnv(Environment):
 
         return False
 
+
     def _update_enemies(self):
         for enemy in self.enemies[:]:
             enemy.update(self.dt, self)
 
-            if isinstance(enemy, Shooter):
-                bullet = enemy.shoot(self.player.position)
+            if isinstance(
+                enemy,
+                (Shooter, Dodger, Tactical),
+            ):
+                bullet = enemy.shoot(
+                    self.player.position
+                )
 
-                if bullet:
+                if bullet is not None:
                     self.enemy_bullets.append(bullet)
 
             if enemy.rect.colliderect(self.player.rect):
@@ -259,6 +280,7 @@ class SpaceInvadersEnv(Environment):
                     self.game_over = True
 
                 break
+
 
     def _update_enemy_bullets(self):
         for bullet in self.enemy_bullets[:]:

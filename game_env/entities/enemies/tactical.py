@@ -1,3 +1,4 @@
+
 import pygame
 
 from game_env.settings import (
@@ -77,7 +78,6 @@ class Tactical:
         )
 
         self.acceleration = direction * acceleration
-
         self.velocity += self.acceleration * dt
 
         max_speed = (
@@ -93,7 +93,6 @@ class Tactical:
         self.position += self.velocity * dt
 
         self.handle_screen_collision()
-
         self.rect.center = self.position
 
     def get_target_direction(self, target_position):
@@ -123,26 +122,35 @@ class Tactical:
 
             if distance < TACTICAL_SEPARATION_DISTANCE:
                 strength = (
-                    TACTICAL_SEPARATION_DISTANCE
-                    - distance
+                    TACTICAL_SEPARATION_DISTANCE - distance
                 ) / TACTICAL_SEPARATION_DISTANCE
 
                 separation += (
-                    offset.normalize()
-                    * strength
+                    offset.normalize() * strength
                 )
 
         return separation
 
-    def shoot(self):
+    def shoot(self, target_position):
         if self.shoot_cooldown > 0:
             return None
+
+        direction = (
+            pygame.Vector2(target_position)
+            - self.position
+        )
+
+        if direction.length_squared() == 0:
+            return None
+
+        direction = direction.normalize()
 
         self.shoot_cooldown = TACTICAL_SHOOT_DELAY
 
         return EnemyBullet(
             self.position.x,
             self.rect.bottom,
+            direction,
         )
 
     def handle_screen_collision(self):

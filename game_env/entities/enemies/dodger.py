@@ -1,3 +1,4 @@
+
 import pygame
 
 from game_env.settings import (
@@ -7,7 +8,6 @@ from game_env.settings import (
     DODGER_ACCELERATION,
     DODGER_DRAG,
     DODGER_DANGER_DISTANCE,
-    DODGER_PREDICTION_TIME,
     DODGER_ATTACK_DISTANCE,
     DODGER_SHOOT_DELAY,
 )
@@ -65,7 +65,6 @@ class Dodger:
         self.position += self.velocity * dt
 
         self.handle_screen_collision()
-
         self.rect.center = self.position
 
     def find_dodge_direction(self, game):
@@ -73,7 +72,9 @@ class Dodger:
             if bullet.velocity.y >= 0:
                 continue
 
-            vertical_distance = self.position.y - bullet.position.y
+            vertical_distance = (
+                self.position.y - bullet.position.y
+            )
 
             if vertical_distance < 0:
                 continue
@@ -117,7 +118,6 @@ class Dodger:
 
     def attack(self, dt, target_position):
         direction = target_position - self.position
-
         distance = direction.length()
 
         if distance > DODGER_ATTACK_DISTANCE:
@@ -131,7 +131,6 @@ class Dodger:
             )
 
             self.acceleration = direction * acceleration
-
             self.velocity += self.acceleration * dt
 
         else:
@@ -147,15 +146,26 @@ class Dodger:
 
         self.velocity *= DODGER_DRAG ** (dt * 60)
 
-    def shoot(self):
+    def shoot(self, target_position):
         if self.shoot_cooldown > 0:
             return None
+
+        direction = (
+            pygame.Vector2(target_position)
+            - self.position
+        )
+
+        if direction.length_squared() == 0:
+            return None
+
+        direction = direction.normalize()
 
         self.shoot_cooldown = DODGER_SHOOT_DELAY
 
         return EnemyBullet(
             self.position.x,
             self.rect.bottom,
+            direction,
         )
 
     def handle_screen_collision(self):
