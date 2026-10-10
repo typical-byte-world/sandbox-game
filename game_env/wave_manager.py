@@ -1,5 +1,7 @@
+
 from game_env.entities.bosses.boss import Boss
 from game_env.settings import WIDTH
+
 
 class WaveManager:
     WAVES = [
@@ -9,40 +11,25 @@ class WaveManager:
                 "scout": 5,
                 "shooter": 5,
                 "kamikaze": 5,
-
-                # "dodger": 1,
-                # "tactical": 1,
             },
         },
-        # {
-        #     "color": (80, 170, 255),
-        #     "enemies": {
-        #         "scout": 2,
-        #         "shooter": 2,
-        #         # "dodger": 3,
-        #         "kamikaze": 5,
-        #         # "tactical": 2,
-        #     },
-        # },
-        # {
-        #     "color": (255, 120, 70),
-        #     "enemies": {
-        #         "scout": 4,
-        #         "shooter": 3,
-        #         # "dodger": 4,
-        #         "kamikaze": 3,
-        #         # "tactical": 3,
-        #     },
-        # },
     ]
 
     def __init__(self, game):
         self.game = game
-        self.game_complete = False
 
+        self.game_complete = False
         self.current_wave = 0
         self.spawn_queue = []
         self.wave_color = (255, 255, 255)
+
+    def reset(self):
+        self.game_complete = False
+        self.current_wave = 0
+        self.spawn_queue = []
+        self.wave_color = (255, 255, 255)
+
+        self.start_next_wave()
 
     def start_next_wave(self):
         self.current_wave += 1
@@ -52,7 +39,6 @@ class WaveManager:
                 WIDTH // 2,
                 250,
             )
-
             return
 
         wave = self.WAVES[self.current_wave - 1]
@@ -79,7 +65,6 @@ class WaveManager:
             self.wave_color,
             self.current_wave,
         )
-
 
     def update(self, dt):
         if self.game.stats.game_complete:
