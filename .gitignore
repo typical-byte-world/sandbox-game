@@ -135,3 +135,6 @@ dmypy.json
 zzz.txt
 
 repo_dump.py
+
+models
+results
