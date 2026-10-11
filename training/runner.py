@@ -9,38 +9,18 @@ import pygame
 import torch
 
 from game_env.agent.NeuralAgent import NeuralAgent
+from game_env.agent.dqn_agent import DQNAgent
 from game_env.controllers.random import RandomController
 from game_env.core.simple_target import SimpleTargetEnv
-from game_env.core.space_invaders import SpaceInvadersEnv
+from game_env.core.stagnation_space_invaders import (
+    StagnationSpaceInvadersEnv,
+)
 from game_env.rendering.pygame_renderer import PygameRenderer
 from game_env.settings import FPS, GAMMA
+from training.trajectory_debugger import TrajectoryDebugger
 
 
 class ExperimentRunner:
-    COMMON_FIELDS = [
-        "episode",
-        "steps",
-        "total_reward",
-        "terminated",
-        "truncated",
-    ]
-
-    SIMPLE_TARGET_FIELDS = [
-        "success",
-        "final_distance",
-    ]
-
-    SPACE_INVADERS_FIELDS = [
-        "survival_time",
-        "shots_fired",
-        "shots_hit",
-        "accuracy",
-        "kills",
-        "score",
-        "lives_remaining",
-        "game_complete",
-    ]
-
     def __init__(
         self,
         mode="train",
@@ -52,58 +32,67 @@ class ExperimentRunner:
         render=False,
         reward_shaping=False,
         shaping_scale=1.0,
+        agent_type="neural",
+        n_steps=5,
+        max_stagnation_steps=300,
+        debug_last_steps=30,
     ):
-        if mode not in ("train", "evaluate", "random"):
-            raise ValueError(
-                f"Unknown mode: {mode}"
-            )
+        if mode not in {"train", "evaluate", "random"}:
+            raise ValueError(f"Unknown mode: {mode}")
 
-        if environment not in (
+        if environment not in {
             "space-invaders",
             "simple-target",
-        ):
+        }:
             raise ValueError(
                 f"Unknown environment: {environment}"
             )
 
+        if agent_type not in {"neural", "dqn"}:
+            raise ValueError(
+                f"Unknown agent type: {agent_type}"
+            )
+
         if episodes < 1:
+            raise ValueError("episodes must be >= 1")
+
+        if max_steps < 1:
+            raise ValueError("max_steps must be >= 1")
+
+        if n_steps < 1:
+            raise ValueError("n_steps must be >= 1")
+
+        if (
+            max_stagnation_steps is not None
+            and max_stagnation_steps < 1
+        ):
             raise ValueError(
-                "episodes must be >= 1"
+                "max_stagnation_steps must be >= 1"
             )
 
-        if max_steps is not None and max_steps < 1:
+        if debug_last_steps < 1:
             raise ValueError(
-                "max_steps must be >= 1"
-            )
-
-        if render and environment != "space-invaders":
-            raise ValueError(
-                "Rendering is only supported for space-invaders."
-            )
-
-        if reward_shaping and environment != "simple-target":
-            raise ValueError(
-                "Reward shaping is only supported for simple-target."
-            )
-
-        if shaping_scale < 0:
-            raise ValueError(
-                "shaping_scale must be >= 0"
+                "debug_last_steps must be >= 1"
             )
 
         self.mode = mode
-        self.environment_name = environment
+        self.environment = environment
         self.episodes = episodes
         self.max_steps = max_steps
         self.seed = seed
         self.experiment_name = experiment_name
+        self.render = render
 
         self.reward_shaping = reward_shaping
         self.shaping_scale = shaping_scale
 
-        self.render_enabled = render
-        self.renderer = None
-        self.clock = None
+        self.agent_type = agent_type
+        self.n_steps = n_steps
+
+        self.max_stagnation_steps = (
+            max_stagnation_steps
+        )
+        self.debug_last_steps = debug_last_steps
 
         random.seed(seed)
         np.random.seed(seed)
@@ -114,17 +103,33 @@ class ExperimentRunner:
         observation, _ = self.env.reset(seed=seed)
         self.input_size = len(observation)
 
-        self.model_path = (
-            Path("models")
-            / environment
-            / f"{experiment_name}.pt"
-        )
+        if self.agent_type == "dqn":
+            self.model_path = (
+                Path("models")
+                / environment
+                / "dqn"
+                / f"{experiment_name}.pt"
+            )
 
-        self.results_path = (
-            Path("results")
-            / environment
-            / f"{experiment_name}_{mode}.csv"
-        )
+            self.results_path = (
+                Path("results")
+                / environment
+                / "dqn"
+                / f"{experiment_name}_{mode}.csv"
+            )
+
+        else:
+            self.model_path = (
+                Path("models")
+                / environment
+                / f"{experiment_name}.pt"
+            )
+
+            self.results_path = (
+                Path("results")
+                / environment
+                / f"{experiment_name}_{mode}.csv"
+            )
 
         self.model_path.parent.mkdir(
             parents=True,
@@ -136,12 +141,8 @@ class ExperimentRunner:
             exist_ok=True,
         )
 
-        self.agent = self._create_agent()
-        self.fields = self._get_fields()
-        self.results = []
-
     def _create_environment(self):
-        if self.environment_name == "simple-target":
+        if self.environment == "simple-target":
             return SimpleTargetEnv(
                 max_steps=self.max_steps,
                 reward_shaping=self.reward_shaping,
@@ -149,13 +150,35 @@ class ExperimentRunner:
                 shaping_scale=self.shaping_scale,
             )
 
-        return SpaceInvadersEnv(
-            max_steps=self.max_steps
+        return StagnationSpaceInvadersEnv(
+            max_steps=self.max_steps,
+            max_stagnation_steps=(
+                self.max_stagnation_steps
+            ),
         )
 
     def _create_agent(self):
         if self.mode == "random":
             return RandomController()
+
+        if self.agent_type == "dqn":
+            agent = DQNAgent(
+                input_size=self.input_size,
+                training=self.mode == "train",
+                n_steps=self.n_steps,
+                gamma=GAMMA,
+                seed=self.seed,
+            )
+
+            if self.mode == "evaluate":
+                if not self.model_path.exists():
+                    raise FileNotFoundError(
+                        f"Model not found: {self.model_path}"
+                    )
+
+                agent.load(self.model_path)
+
+            return agent
 
         agent = NeuralAgent(
             input_size=self.input_size,
@@ -168,134 +191,121 @@ class ExperimentRunner:
                     f"Model not found: {self.model_path}"
                 )
 
-            agent.load(str(self.model_path))
-            agent.network.eval()
+            agent.load(self.model_path)
 
         return agent
 
-    def _get_fields(self):
-        fields = self.COMMON_FIELDS.copy()
+    def _create_renderer(self):
+        if not self.render:
+            return None
 
-        if self.environment_name == "simple-target":
-            fields.extend(self.SIMPLE_TARGET_FIELDS)
-        else:
-            fields.extend(self.SPACE_INVADERS_FIELDS)
+        if self.environment != "space-invaders":
+            raise ValueError(
+                "Rendering is supported only "
+                "for SpaceInvadersEnv"
+            )
 
-        return fields
+        pygame.init()
 
-    def run(self):
-        self.results = []
-        self._initialize_csv()
+        return PygameRenderer()
 
-        print(
-            f"\nExperiment: {self.experiment_name}"
-            f"\nEnvironment: {self.environment_name}"
-            f"\nMode: {self.mode}"
-            f"\nEpisodes: {self.episodes}"
-            f"\nMax steps: {self.max_steps}"
-            f"\nInput size: {self.input_size}"
-            f"\nSeed: {self.seed}"
-            f"\nRender: {self.render_enabled}"
-            f"\nReward shaping: {self.reward_shaping}"
-            f"\nShaping scale: {self.shaping_scale}\n"
+    def _create_debugger(self):
+        if not (
+            self.environment == "space-invaders"
+            and self.mode == "evaluate"
+            and self.agent_type == "dqn"
+        ):
+            return None
+
+        return TrajectoryDebugger(
+            output_dir=(
+                Path("results")
+                / "space-invaders"
+                / "dqn"
+                / self.experiment_name
+                / "stagnation"
+            ),
+            last_steps=self.debug_last_steps,
         )
 
-        completed = True
+    def _choose_action(self, agent, observation):
+        return agent.choose_action(observation)
 
-        try:
-            if self.render_enabled:
-                self.renderer = PygameRenderer()
-                self.clock = pygame.time.Clock()
+    def _train_agent(
+        self,
+        agent,
+        observation,
+        action,
+        reward,
+        next_observation,
+        terminated,
+        truncated,
+    ):
+        if self.mode != "train":
+            return
 
-            for episode in range(1, self.episodes + 1):
-                result = self._run_episode(episode)
+        if isinstance(agent, DQNAgent):
+            agent.observe(
+                state=observation,
+                action=action,
+                reward=reward,
+                next_state=next_observation,
+                terminated=terminated,
+                truncated=truncated,
+            )
+            return
 
-                if result is None:
-                    completed = False
-                    break
-
-                self.results.append(result)
-                self._save_result(result)
-                self._print_episode(result)
-
-        finally:
-            if self.renderer is not None:
-                self.renderer.close()
-                self.renderer = None
-                self.clock = None
-
-            if self.mode == "train":
-                self.agent.save(str(self.model_path))
-                print(f"\nModel saved: {self.model_path}")
-
-        self._print_summary()
-
-        if not completed:
-            print("\nExperiment interrupted.")
-
-        return self.results
-
-    def _run_episode(self, episode):
-        observation, info = self.env.reset(
-            seed=self.seed + episode
+        agent.update_q_values(
+            state=observation,
+            action=action,
+            reward=reward,
+            next_state=next_observation,
+            done=terminated,
         )
 
-        total_reward = 0.0
+    def _handle_render(self, renderer, agent):
+        if renderer is None:
+            return True
 
-        while True:
-            if self.renderer is not None:
-                if not self.renderer.handle_events():
-                    return None
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
 
-            action = self.agent.choose_action(observation)
+        renderer.render(self.env, agent)
+        return True
 
-            (
-                next_observation,
-                reward,
-                terminated,
-                truncated,
-                info,
-            ) = self.env.step(action)
-
-            if self.mode == "train":
-                self.agent.update_q_values(
-                    observation,
-                    action,
-                    reward,
-                    next_observation,
-                    done=terminated,
-                )
-
-            total_reward += reward
-            observation = next_observation
-
-            if self.renderer is not None:
-                self.renderer.render(
-                    self.env,
-                    self.agent,
-                )
-                self.clock.tick(FPS)
-
-            if terminated or truncated:
-                break
-
+    def _make_result(
+        self,
+        episode,
+        steps,
+        total_reward,
+        terminated,
+        truncated,
+        info,
+    ):
         result = {
             "episode": episode,
-            "steps": info["steps"],
-            "total_reward": round(total_reward, 6),
+            "seed": self.seed + episode,
+            "steps": steps,
+            "total_reward": total_reward,
             "terminated": terminated,
             "truncated": truncated,
         }
 
-        if self.environment_name == "simple-target":
+        if self.environment == "simple-target":
             result.update({
-                "success": info["success"],
-                "final_distance": info["distance"],
+                "success": bool(
+                    info.get("success", False)
+                ),
+                "final_distance": info.get(
+                    "distance",
+                    info.get("final_distance"),
+                ),
             })
 
         else:
-            shots_fired = info["shots_fired"]
-            shots_hit = info["shots_hit"]
+            shots_fired = info.get("shots_fired", 0)
+            shots_hit = info.get("shots_hit", 0)
 
             accuracy = (
                 shots_hit / shots_fired
@@ -304,21 +314,38 @@ class ExperimentRunner:
             )
 
             result.update({
-                "survival_time": round(
-                    info["survival_time"], 3
+                "wave": info.get("wave", 0),
+                "survival_time": info.get(
+                    "survival_time", 0.0
                 ),
                 "shots_fired": shots_fired,
                 "shots_hit": shots_hit,
-                "accuracy": round(accuracy, 6),
-                "kills": info["kills"],
-                "score": info["score"],
-                "lives_remaining": info["lives"],
-                "game_complete": info["game_complete"],
+                "accuracy": accuracy,
+                "kills": info.get("kills", 0),
+                "score": info.get("score", 0),
+                "lives_remaining": info.get(
+                    "lives", 0
+                ),
+                "game_complete": info.get(
+                    "game_complete", False
+                ),
+                "steps_since_progress": info.get(
+                    "steps_since_progress", 0
+                ),
+                "stagnation_detected": info.get(
+                    "stagnation_detected", False
+                ),
+                "truncation_reason": info.get(
+                    "truncation_reason"
+                ),
             })
 
         return result
 
-    def _initialize_csv(self):
+    def _save_results(self, results):
+        if not results:
+            return
+
         with self.results_path.open(
             "w",
             newline="",
@@ -326,121 +353,265 @@ class ExperimentRunner:
         ) as file:
             writer = csv.DictWriter(
                 file,
-                fieldnames=self.fields,
+                fieldnames=list(results[0].keys()),
             )
+
             writer.writeheader()
+            writer.writerows(results)
 
-    def _save_result(self, result):
-        with self.results_path.open(
-            "a",
-            newline="",
-            encoding="utf-8",
-        ) as file:
-            writer = csv.DictWriter(
-                file,
-                fieldnames=self.fields,
-            )
-            writer.writerow(result)
-
-    def _print_episode(self, result):
-        prefix = (
-            f"Episode {result['episode']}/"
-            f"{self.episodes} | "
-            f"Steps: {result['steps']} | "
-            f"Reward: {result['total_reward']:.2f}"
-        )
-
-        if self.environment_name == "simple-target":
-            print(
-                f"{prefix} | "
-                f"Success: {result['success']} | "
-                f"Distance: {result['final_distance']}"
-            )
-        else:
-            print(
-                f"{prefix} | "
-                f"Kills: {result['kills']} | "
-                f"Accuracy: {result['accuracy']:.2%}"
-            )
-
-    def _print_summary(self):
-        if not self.results:
-            print("\nNo completed episodes.")
+    def _print_summary(self, results, agent):
+        if not results:
             return
 
-        print("\n" + "=" * 50)
+        avg_reward = mean(
+            row["total_reward"]
+            for row in results
+        )
+
+        avg_steps = mean(
+            row["steps"]
+            for row in results
+        )
+
+        print()
+        print("=" * 60)
         print("EXPERIMENT SUMMARY")
-        print("=" * 50)
+        print("=" * 60)
 
-        print(f"Experiment: {self.experiment_name}")
-        print(f"Environment: {self.environment_name}")
+        print(f"Environment: {self.environment}")
         print(f"Mode: {self.mode}")
-        print(f"Completed episodes: {len(self.results)}")
+        print(f"Agent: {self.agent_type}")
+        print(
+            f"N-steps: "
+            f"{self.n_steps if self.agent_type == 'dqn' else 'N/A'}"
+        )
+        print(f"Episodes: {len(results)}")
+        print(f"Observation size: {self.input_size}")
 
-        self._print_metric("steps")
-        self._print_metric("total_reward")
+        print(f"Average reward: {avg_reward:.4f}")
+        print(f"Average steps: {avg_steps:.2f}")
 
-        if self.environment_name == "simple-target":
+        if self.environment == "simple-target":
             successes = sum(
-                result["success"]
-                for result in self.results
+                bool(row["success"])
+                for row in results
             )
 
-            success_rate = successes / len(self.results)
+            success_rate = (
+                100 * successes / len(results)
+            )
 
-            print(f"Success rate: {success_rate:.2%}")
-            self._print_metric("final_distance")
+            print(f"Success rate: {success_rate:.2f}%")
 
         else:
-            self._print_metric("survival_time")
-            self._print_metric("kills")
-            self._print_metric("shots_fired")
-            self._print_metric("shots_hit")
-
-            total_shots = sum(
-                result["shots_fired"]
-                for result in self.results
+            avg_kills = mean(
+                row["kills"]
+                for row in results
             )
 
-            total_hits = sum(
-                result["shots_hit"]
-                for result in self.results
+            avg_accuracy = mean(
+                row["accuracy"]
+                for row in results
             )
 
-            accuracy = (
-                total_hits / total_shots
-                if total_shots > 0
-                else 0.0
+            completed_games = sum(
+                bool(row["game_complete"])
+                for row in results
             )
 
-            print(f"Overall accuracy: {accuracy:.2%}")
-
-            wins = sum(
-                result["game_complete"]
-                for result in self.results
+            stagnation_count = sum(
+                bool(row["stagnation_detected"])
+                for row in results
             )
 
-            print(f"Completed games: {wins}")
+            print(f"Average kills: {avg_kills:.2f}")
+            print(f"Average accuracy: {avg_accuracy:.2%}")
+            print(f"Games completed: {completed_games}")
+            print(
+                f"Stagnation episodes: "
+                f"{stagnation_count}/{len(results)}"
+            )
 
-        terminated_count = sum(
-            result["terminated"]
-            for result in self.results
-        )
+        if isinstance(agent, DQNAgent):
+            print(
+                f"Environment steps: "
+                f"{agent.environment_steps}"
+            )
+            print(
+                f"Gradient steps: "
+                f"{agent.gradient_steps}"
+            )
+            print(
+                f"Replay size: "
+                f"{len(agent.replay_buffer)}"
+            )
 
-        truncated_count = sum(
-            result["truncated"]
-            for result in self.results
-        )
-
-        print(f"Terminated: {terminated_count}")
-        print(f"Truncated: {truncated_count}")
         print(f"Results: {self.results_path}")
-        print("=" * 50)
 
-    def _print_metric(self, metric):
-        values = [
-            result[metric]
-            for result in self.results
-        ]
+        if self.mode == "train":
+            print(f"Model: {self.model_path}")
 
-        print(f"{metric}: {mean(values):.3f}")
+        print("=" * 60)
+
+    def run(self):
+        agent = self._create_agent()
+        renderer = self._create_renderer()
+        debugger = self._create_debugger()
+
+        clock = (
+            pygame.time.Clock()
+            if renderer is not None
+            else None
+        )
+
+        results = []
+        interrupted = False
+
+        print("=" * 60)
+        print("START EXPERIMENT")
+        print("=" * 60)
+        print(f"Environment: {self.environment}")
+        print(f"Mode: {self.mode}")
+        print(f"Agent: {self.agent_type}")
+        print(f"N-steps: {self.n_steps}")
+        print(f"Episodes: {self.episodes}")
+        print(f"Max steps: {self.max_steps}")
+        print(
+            f"Max stagnation steps: "
+            f"{self.max_stagnation_steps}"
+        )
+        print(f"Input size: {self.input_size}")
+        print(f"Seed: {self.seed}")
+        print("=" * 60)
+
+        try:
+            for episode in range(self.episodes):
+                observation, info = self.env.reset(
+                    seed=self.seed + episode
+                )
+
+                if isinstance(agent, DQNAgent):
+                    agent.reset_episode()
+
+                if debugger is not None:
+                    debugger.reset()
+
+                terminated = False
+                truncated = False
+                total_reward = 0.0
+                steps = 0
+
+                for _ in range(self.max_steps):
+                    action = self._choose_action(
+                        agent,
+                        observation,
+                    )
+
+                    if debugger is not None:
+                        debugger.record(
+                            env=self.env,
+                            agent=agent,
+                            state=observation,
+                            action=action,
+                            step=steps + 1,
+                        )
+
+                    (
+                        next_observation,
+                        reward,
+                        terminated,
+                        truncated,
+                        info,
+                    ) = self.env.step(action)
+
+                    self._train_agent(
+                        agent=agent,
+                        observation=observation,
+                        action=action,
+                        reward=reward,
+                        next_observation=next_observation,
+                        terminated=terminated,
+                        truncated=truncated,
+                    )
+
+                    total_reward += float(reward)
+                    steps += 1
+                    observation = next_observation
+
+                    if renderer is not None:
+                        if not self._handle_render(
+                            renderer, agent
+                        ):
+                            interrupted = True
+                            truncated = True
+                            break
+
+                        clock.tick(FPS)
+
+                    if terminated or truncated:
+                        break
+
+                result = self._make_result(
+                    episode=episode,
+                    steps=steps,
+                    total_reward=total_reward,
+                    terminated=terminated,
+                    truncated=truncated,
+                    info=info,
+                )
+
+                if (
+                    debugger is not None
+                    and info.get("truncation_reason")
+                    == "stagnation"
+                ):
+                    path = debugger.save(
+                        episode=episode + 1
+                    )
+
+                    if path is not None:
+                        print(
+                            f"Stagnation trajectory: {path}"
+                        )
+
+                results.append(result)
+
+                if isinstance(agent, DQNAgent):
+                    loss_text = (
+                        f"{agent.last_loss:.6f}"
+                        if agent.last_loss is not None
+                        else "N/A"
+                    )
+
+                    print(
+                        f"Episode {episode + 1}/{self.episodes} | "
+                        f"Reward: {total_reward:.2f} | "
+                        f"Steps: {steps} | "
+                        f"Epsilon: {agent.epsilon:.4f} | "
+                        f"Loss: {loss_text} | "
+                        f"Buffer: {len(agent.replay_buffer)} | "
+                        f"Reason: {info.get('truncation_reason')}"
+                    )
+
+                else:
+                    print(
+                        f"Episode {episode + 1}/{self.episodes} | "
+                        f"Reward: {total_reward:.2f} | "
+                        f"Steps: {steps} | "
+                        f"Reason: {info.get('truncation_reason')}"
+                    )
+
+                if interrupted:
+                    break
+
+        finally:
+            if renderer is not None:
+                pygame.quit()
+
+        if self.mode == "train":
+            agent.save(self.model_path)
+
+        self._save_results(results)
+        self._print_summary(results, agent)
+
+        return results

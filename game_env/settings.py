@@ -176,7 +176,7 @@ GAMMA = 0.99
 # ============== REWARD ============== #
 
 ENEMY_HIT = 5
-LOST_LIFE = -5
+LOST_LIFE = -15
 BOSS_DESTROY = 10
 DIE = -20
 NOTHIG_HAPPEN = 0

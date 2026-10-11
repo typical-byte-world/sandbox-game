@@ -17,7 +17,7 @@ class Reward:
         self.die = DIE
         self.nothing_happen = NOTHIG_HAPPEN
         self.survival = SURVIVAL
-        self.aim_reward = AIM_REWARD
+        self.aim_reward = 0 #AIM_REWARD
 
 
 

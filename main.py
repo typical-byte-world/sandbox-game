@@ -67,6 +67,18 @@ def main():
         type=float,
         default=1.0,
     )
+
+    parser.add_argument(
+        "--agent",
+        choices=["neural", "dqn"],
+        default="neural",
+    )
+
+    parser.add_argument(
+        "--n-steps",
+        type=int,
+        default=5,
+    )
     args = parser.parse_args()
 
     runner = ExperimentRunner(
@@ -79,6 +91,8 @@ def main():
         render=args.render,
         reward_shaping=args.reward_shaping,
         shaping_scale=args.shaping_scale,
+        agent_type=args.agent,
+        n_steps=args.n_steps,
     )
 
     runner.run()

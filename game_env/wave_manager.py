@@ -10,7 +10,7 @@ class WaveManager:
             "enemies": {
                 "scout": 5,
                 "shooter": 5,
-                "kamikaze": 5,
+                # "kamikaze": 5,
             },
         },
     ]
