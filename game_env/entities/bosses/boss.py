@@ -1,33 +1,33 @@
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
+    WIDTH,
+)
+from game_env.config.physics import (
+    BOSS_ACCELERATION,
+    BOSS_DASH_COOLDOWN,
+    BOSS_DASH_DURATION,
+    BOSS_DASH_SPEED,
+    BOSS_DRAG,
+    BOSS_HP_BAR_HEIGHT,
+    BOSS_HP_BAR_WIDTH,
+    BOSS_MAX_DISTANCE,
     BOSS_MAX_HEALTH,
     BOSS_MAX_SPEED,
-    BOSS_ACCELERATION,
-    BOSS_DRAG,
     BOSS_MIN_DISTANCE,
-    BOSS_MAX_DISTANCE,
     BOSS_SHOOT_DELAY,
-    BOSS_DASH_COOLDOWN,
-    BOSS_DASH_SPEED,
-    BOSS_DASH_DURATION,
-    BOSS_HP_BAR_HEIGHT,
-    BOSS_HP_BAR_WIDTH
 )
-
-from game_env.pixel_art import (
+from game_env.entities.enemy_bullet import EnemyBullet
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     BOSS_SPRITE,
     draw_pixel_sprite,
 )
 
-from game_env.entities.enemy_bullet import EnemyBullet
-
 
 class Boss:
     def __init__(self, x, y):
-        name = "_boss1"
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.acceleration = pygame.Vector2(0, 0)
@@ -101,16 +101,12 @@ class Boss:
         if direction.length_squared() > 0:
             direction = direction.normalize()
 
-        self.acceleration = (
-            direction * BOSS_ACCELERATION
-        )
+        self.acceleration = direction * BOSS_ACCELERATION
 
         self.velocity += self.acceleration * dt
 
         if self.velocity.length() > BOSS_MAX_SPEED:
-            self.velocity.scale_to_length(
-                BOSS_MAX_SPEED
-            )
+            self.velocity.scale_to_length(BOSS_MAX_SPEED)
 
         self.velocity *= BOSS_DRAG ** (dt * 60)
 
@@ -125,9 +121,7 @@ class Boss:
 
         direction = direction.normalize()
 
-        self.velocity = (
-            direction * BOSS_DASH_SPEED
-        )
+        self.velocity = direction * BOSS_DASH_SPEED
 
         self.is_dashing = True
         self.dash_timer = BOSS_DASH_DURATION
@@ -140,18 +134,13 @@ class Boss:
             self.is_dashing = False
 
             if self.velocity.length() > BOSS_MAX_SPEED:
-                self.velocity.scale_to_length(
-                    BOSS_MAX_SPEED
-                )
-
+                self.velocity.scale_to_length(BOSS_MAX_SPEED)
 
     def shoot(self, game):
         if self.shoot_cooldown > 0:
             return None
 
-        direction = (
-            game.player.position - self.position
-        )
+        direction = game.player.position - self.position
 
         if direction.length_squared() == 0:
             return None
@@ -166,7 +155,6 @@ class Boss:
             direction,
         )
 
-
     def take_damage(self, damage):
         self.health -= damage
 
@@ -175,24 +163,14 @@ class Boss:
             self.is_alive = False
 
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x *= -1
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x *= -1
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y *= -1
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y *= -1
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=True,
+        )
 
     def draw(self, screen):
         draw_pixel_sprite(
@@ -226,6 +204,5 @@ class Boss:
             screen,
             (90, 250, 50),
             (x_bar_pos, y_bar_pos, BOSS_HP_BAR_WIDTH, BOSS_HP_BAR_HEIGHT),
-            3
+            3,
         )
-

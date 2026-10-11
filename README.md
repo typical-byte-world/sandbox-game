@@ -111,3 +111,24 @@ experiments/
 ```bash
 watchfiles "python main.py"
 ```
+
+## Запуск і розробка
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py --env space-invaders --mode random --render
+python main.py --env simple-target --mode train --agent dqn --episodes 20
+python main.py --env simple-target --mode evaluate --agent dqn --episodes 20
+```
+
+Команди CLI й шляхи результатів залишилися сумісними. За потреби можна встановити проєкт через `pip install -e '.[dev]'` і запускати ті самі аргументи командою `alien-invasion`.
+
+```bash
+python -m unittest discover -s tests -v
+ruff check .
+black --check .
+```
+
+Код поділено на `application`, `game_env`, `agents` і `training`. Деталі меж модулів, сумісності й перевірок: [архітектура](docs/architecture.md).

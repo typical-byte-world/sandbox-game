@@ -1,9 +1,8 @@
-
 from abc import ABC, abstractmethod
 
 import numpy as np
 
-from game_env.controllers.action import Action
+from game_env.contracts.action import Action
 
 
 class Environment(ABC):

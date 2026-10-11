@@ -1,7 +1,6 @@
-
 import pygame
 
-from game_env.settings import (
+from game_env.config.physics import (
     BULLET_HEIGHT,
     BULLET_SPEED,
     BULLET_WIDTH,

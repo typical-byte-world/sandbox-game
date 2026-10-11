@@ -1,9 +1,9 @@
 import pygame
 
-from game_env.settings import (
-    ENEMY_BULLET_WIDTH,
+from game_env.config.physics import (
     ENEMY_BULLET_HEIGHT,
     ENEMY_BULLET_SPEED,
+    ENEMY_BULLET_WIDTH,
 )
 
 

@@ -1,25 +1,25 @@
-
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    TACTICAL_MAX_SPEED,
+    WIDTH,
+)
+from game_env.config.physics import (
     TACTICAL_ACCELERATION,
     TACTICAL_DRAG,
-    TACTICAL_MIN_DISTANCE,
     TACTICAL_MAX_DISTANCE,
+    TACTICAL_MAX_SPEED,
+    TACTICAL_MIN_DISTANCE,
     TACTICAL_SEPARATION_DISTANCE,
     TACTICAL_SEPARATION_FORCE,
     TACTICAL_SHOOT_DELAY,
 )
-
-from game_env.pixel_art import (
+from game_env.entities.enemy_bullet import EnemyBullet
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     TACTICAL_SPRITE,
     draw_pixel_sprite,
 )
-
-from game_env.entities.enemy_bullet import EnemyBullet
 
 
 class Tactical:
@@ -56,34 +56,21 @@ class Tactical:
 
         target_position = game.player.position
 
-        target_direction = self.get_target_direction(
-            target_position
-        )
+        target_direction = self.get_target_direction(target_position)
 
-        separation_direction = self.get_separation_direction(
-            game
-        )
+        separation_direction = self.get_separation_direction(game)
 
-        direction = (
-            target_direction
-            + separation_direction * TACTICAL_SEPARATION_FORCE
-        )
+        direction = target_direction + separation_direction * TACTICAL_SEPARATION_FORCE
 
         if direction.length_squared() > 0:
             direction = direction.normalize()
 
-        acceleration = (
-            TACTICAL_ACCELERATION
-            * self.speed_multiplier
-        )
+        acceleration = TACTICAL_ACCELERATION * self.speed_multiplier
 
         self.acceleration = direction * acceleration
         self.velocity += self.acceleration * dt
 
-        max_speed = (
-            TACTICAL_MAX_SPEED
-            * self.speed_multiplier
-        )
+        max_speed = TACTICAL_MAX_SPEED * self.speed_multiplier
 
         if self.velocity.length() > max_speed:
             self.velocity.scale_to_length(max_speed)
@@ -125,9 +112,7 @@ class Tactical:
                     TACTICAL_SEPARATION_DISTANCE - distance
                 ) / TACTICAL_SEPARATION_DISTANCE
 
-                separation += (
-                    offset.normalize() * strength
-                )
+                separation += offset.normalize() * strength
 
         return separation
 
@@ -135,10 +120,7 @@ class Tactical:
         if self.shoot_cooldown > 0:
             return None
 
-        direction = (
-            pygame.Vector2(target_position)
-            - self.position
-        )
+        direction = pygame.Vector2(target_position) - self.position
 
         if direction.length_squared() == 0:
             return None
@@ -154,24 +136,14 @@ class Tactical:
         )
 
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x = 0
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x = 0
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y = 0
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y = 0
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=False,
+        )
 
     def draw(self, screen):
         draw_pixel_sprite(

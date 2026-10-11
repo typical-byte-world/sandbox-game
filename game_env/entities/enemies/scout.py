@@ -1,14 +1,16 @@
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    SCOUT_MAX_SPEED,
+    WIDTH,
+)
+from game_env.config.physics import (
     SCOUT_ACCELERATION,
     SCOUT_DRAG,
+    SCOUT_MAX_SPEED,
 )
-
-from game_env.pixel_art import (
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     SCOUT_SPRITE,
     draw_pixel_sprite,
 )
@@ -69,24 +71,14 @@ class Scout:
         self.rect.center = self.position
 
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x *= -1
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x *= -1
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y *= -1
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y *= -1
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=True,
+        )
 
     def shoot(self):
         return None

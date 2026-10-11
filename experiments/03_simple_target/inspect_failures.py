@@ -1,9 +1,7 @@
-
 from collections import Counter
 
-from game_env.agent.NeuralAgent import NeuralAgent
+from agents.neural_agent import NeuralAgent
 from game_env.core.simple_target import SimpleTargetEnv
-
 
 agent = NeuralAgent(input_size=2, training=False)
 agent.load("models/simple-target/target_01.pt")
@@ -24,17 +22,17 @@ for episode in range(1, 101):
         action = agent.choose_action(observation)
         action_index = agent.actions.index(action)
 
-        trajectory.append({
-            "step": info["steps"],
-            "player_x": info["player_x"],
-            "target_x": info["target_x"],
-            "distance": info["distance"],
-            "action": action_names[action_index],
-        })
-
-        observation, reward, terminated, truncated, info = (
-            env.step(action)
+        trajectory.append(
+            {
+                "step": info["steps"],
+                "player_x": info["player_x"],
+                "target_x": info["target_x"],
+                "distance": info["distance"],
+                "action": action_names[action_index],
+            }
         )
+
+        observation, reward, terminated, truncated, info = env.step(action)
 
         if terminated or truncated:
             break
@@ -48,13 +46,7 @@ for episode in range(1, 101):
             f"Target: {trajectory[0]['target_x']}"
         )
 
-        print(
-            "Actions:",
-            dict(Counter(
-                step["action"]
-                for step in trajectory
-            ))
-        )
+        print("Actions:", dict(Counter(step["action"] for step in trajectory)))
 
         print("Last 10 steps:")
 

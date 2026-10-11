@@ -1,23 +1,23 @@
-
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    DODGER_MAX_SPEED,
+    WIDTH,
+)
+from game_env.config.physics import (
     DODGER_ACCELERATION,
-    DODGER_DRAG,
-    DODGER_DANGER_DISTANCE,
     DODGER_ATTACK_DISTANCE,
+    DODGER_DANGER_DISTANCE,
+    DODGER_DRAG,
+    DODGER_MAX_SPEED,
     DODGER_SHOOT_DELAY,
 )
-
-from game_env.pixel_art import (
+from game_env.entities.enemy_bullet import EnemyBullet
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     DODGER_SPRITE,
     draw_pixel_sprite,
 )
-
-from game_env.entities.enemy_bullet import EnemyBullet
 
 
 class Dodger:
@@ -72,9 +72,7 @@ class Dodger:
             if bullet.velocity.y >= 0:
                 continue
 
-            vertical_distance = (
-                self.position.y - bullet.position.y
-            )
+            vertical_distance = self.position.y - bullet.position.y
 
             if vertical_distance < 0:
                 continue
@@ -82,9 +80,7 @@ class Dodger:
             if vertical_distance > 1000:
                 continue
 
-            horizontal_distance = (
-                bullet.position.x - self.position.x
-            )
+            horizontal_distance = bullet.position.x - self.position.x
 
             if abs(horizontal_distance) > DODGER_DANGER_DISTANCE:
                 continue
@@ -97,19 +93,13 @@ class Dodger:
         return None
 
     def dodge(self, dt, direction):
-        acceleration = (
-            DODGER_ACCELERATION
-            * self.speed_multiplier
-        )
+        acceleration = DODGER_ACCELERATION * self.speed_multiplier
 
         self.acceleration = direction * acceleration
 
         self.velocity += self.acceleration * dt
 
-        max_speed = (
-            DODGER_MAX_SPEED
-            * self.speed_multiplier
-        )
+        max_speed = DODGER_MAX_SPEED * self.speed_multiplier
 
         if self.velocity.length() > max_speed:
             self.velocity.scale_to_length(max_speed)
@@ -124,11 +114,7 @@ class Dodger:
             if direction.length_squared() > 0:
                 direction = direction.normalize()
 
-            acceleration = (
-                DODGER_ACCELERATION
-                * 0.5
-                * self.speed_multiplier
-            )
+            acceleration = DODGER_ACCELERATION * 0.5 * self.speed_multiplier
 
             self.acceleration = direction * acceleration
             self.velocity += self.acceleration * dt
@@ -136,10 +122,7 @@ class Dodger:
         else:
             self.acceleration = pygame.Vector2(0, 0)
 
-        max_speed = (
-            DODGER_MAX_SPEED
-            * self.speed_multiplier
-        )
+        max_speed = DODGER_MAX_SPEED * self.speed_multiplier
 
         if self.velocity.length() > max_speed:
             self.velocity.scale_to_length(max_speed)
@@ -150,10 +133,7 @@ class Dodger:
         if self.shoot_cooldown > 0:
             return None
 
-        direction = (
-            pygame.Vector2(target_position)
-            - self.position
-        )
+        direction = pygame.Vector2(target_position) - self.position
 
         if direction.length_squared() == 0:
             return None
@@ -169,24 +149,14 @@ class Dodger:
         )
 
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x *= -1
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x *= -1
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y *= -1
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y *= -1
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=True,
+        )
 
     def draw(self, screen):
         draw_pixel_sprite(

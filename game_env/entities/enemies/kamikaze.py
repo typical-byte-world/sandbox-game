@@ -1,16 +1,18 @@
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    KAMIKAZE_MAX_SPEED,
-    KAMIKAZE_ACCELERATION,
-    KAMIKAZE_DRAG,
-    KAMIKAZE_DETECTION_RADIUS,
-    KAMIKAZE_ATTACK_DISTANCE,
+    WIDTH,
 )
-
-from game_env.pixel_art import (
+from game_env.config.physics import (
+    KAMIKAZE_ACCELERATION,
+    KAMIKAZE_ATTACK_DISTANCE,
+    KAMIKAZE_DETECTION_RADIUS,
+    KAMIKAZE_DRAG,
+    KAMIKAZE_MAX_SPEED,
+)
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     KAMIKAZE_SPRITE,
     draw_pixel_sprite,
 )
@@ -53,9 +55,7 @@ class Kamikaze:
     def update(self, dt, game):
         target_position = game.player.position
 
-        distance = self.position.distance_to(
-            target_position
-        )
+        distance = self.position.distance_to(target_position)
 
         self.update_state(distance)
 
@@ -101,19 +101,13 @@ class Kamikaze:
         if direction.length_squared() > 0:
             direction = direction.normalize()
 
-        acceleration = (
-            KAMIKAZE_ACCELERATION
-            * self.speed_multiplier
-        )
+        acceleration = KAMIKAZE_ACCELERATION * self.speed_multiplier
 
         self.acceleration = direction * acceleration
 
         self.velocity += self.acceleration * dt
 
-        max_speed = (
-            KAMIKAZE_MAX_SPEED
-            * self.speed_multiplier
-        )
+        max_speed = KAMIKAZE_MAX_SPEED * self.speed_multiplier
 
         if self.velocity.length() > max_speed:
             self.velocity.scale_to_length(max_speed)
@@ -126,21 +120,13 @@ class Kamikaze:
         if direction.length_squared() > 0:
             direction = direction.normalize()
 
-        acceleration = (
-            KAMIKAZE_ACCELERATION
-            * 1.5
-            * self.speed_multiplier
-        )
+        acceleration = KAMIKAZE_ACCELERATION * 1.5 * self.speed_multiplier
 
         self.acceleration = direction * acceleration
 
         self.velocity += self.acceleration * dt
 
-        max_speed = (
-            KAMIKAZE_MAX_SPEED
-            * 1.5
-            * self.speed_multiplier
-        )
+        max_speed = KAMIKAZE_MAX_SPEED * 1.5 * self.speed_multiplier
 
         if self.velocity.length() > max_speed:
             self.velocity.scale_to_length(max_speed)
@@ -148,24 +134,14 @@ class Kamikaze:
         self.velocity *= KAMIKAZE_DRAG ** (dt * 60)
 
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x *= -1
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x *= -1
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y *= -1
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y *= -1
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=True,
+        )
 
     def shoot(self):
         return None

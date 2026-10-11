@@ -1,22 +1,23 @@
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    SHOOTER_MAX_SPEED,
+    WIDTH,
+)
+from game_env.config.physics import (
     SHOOTER_ACCELERATION,
     SHOOTER_DRAG,
-    SHOOTER_MIN_DISTANCE,
     SHOOTER_MAX_DISTANCE,
+    SHOOTER_MAX_SPEED,
+    SHOOTER_MIN_DISTANCE,
     SHOOTER_SHOOT_DELAY,
 )
-
-from game_env.pixel_art import (
+from game_env.entities.enemy_bullet import EnemyBullet
+from game_env.entities.motion import constrain_to_screen
+from game_env.rendering.sprites import (
     SHOOTER_SPRITE,
     draw_pixel_sprite,
 )
-
-from game_env.entities.enemy_bullet import EnemyBullet
 
 
 class Shooter:
@@ -93,15 +94,11 @@ class Shooter:
             self.shoot_cooldown - dt,
         )
 
-
     def shoot(self, target_position):
         if self.shoot_cooldown > 0:
             return None
 
-        direction = (
-            pygame.Vector2(target_position)
-            - self.position
-        )
+        direction = pygame.Vector2(target_position) - self.position
 
         if direction.length_squared() == 0:
             return None
@@ -116,26 +113,15 @@ class Shooter:
             direction,
         )
 
-
     def handle_screen_collision(self):
-        half_width = self.rect.width / 2
-        half_height = self.rect.height / 2
-
-        if self.position.x < half_width:
-            self.position.x = half_width
-            self.velocity.x = 0
-
-        if self.position.x > WIDTH - half_width:
-            self.position.x = WIDTH - half_width
-            self.velocity.x = 0
-
-        if self.position.y < half_height:
-            self.position.y = half_height
-            self.velocity.y = 0
-
-        if self.position.y > HEIGHT - half_height:
-            self.position.y = HEIGHT - half_height
-            self.velocity.y = 0
+        constrain_to_screen(
+            self.position,
+            self.velocity,
+            self.rect,
+            WIDTH,
+            HEIGHT,
+            bounce=False,
+        )
 
     def draw(self, screen):
         draw_pixel_sprite(

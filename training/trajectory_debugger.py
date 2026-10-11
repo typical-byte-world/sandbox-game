@@ -1,4 +1,3 @@
-
 import csv
 from collections import deque
 from pathlib import Path
@@ -30,9 +29,7 @@ class TrajectoryDebugger:
         if targets:
             target = min(
                 targets,
-                key=lambda obj: abs(
-                    obj.position.x - player.position.x
-                ),
+                key=lambda obj: abs(obj.position.x - player.position.x),
             )
 
         q_values = [float("nan")] * 4
@@ -45,12 +42,7 @@ class TrajectoryDebugger:
             ).unsqueeze(0)
 
             with torch.no_grad():
-                q_values = (
-                    agent.policy_network(state_tensor)
-                    .squeeze(0)
-                    .cpu()
-                    .tolist()
-                )
+                q_values = agent.policy_network(state_tensor).squeeze(0).cpu().tolist()
 
         row = {
             "step": step,
@@ -58,21 +50,9 @@ class TrajectoryDebugger:
             "player_y": float(player.position.y),
             "velocity_x": float(player.velocity.x),
             "velocity_y": float(player.velocity.y),
-            "target_type": (
-                type(target).__name__
-                if target is not None
-                else ""
-            ),
-            "target_x": (
-                float(target.position.x)
-                if target is not None
-                else ""
-            ),
-            "target_y": (
-                float(target.position.y)
-                if target is not None
-                else ""
-            ),
+            "target_type": (type(target).__name__ if target is not None else ""),
+            "target_x": (float(target.position.x) if target is not None else ""),
+            "target_y": (float(target.position.y) if target is not None else ""),
             "dx": (
                 float(target.position.x - player.position.x)
                 if target is not None
@@ -91,9 +71,7 @@ class TrajectoryDebugger:
         if not self.history:
             return None
 
-        path = self.output_dir / (
-            f"stagnation_episode_{episode}.csv"
-        )
+        path = self.output_dir / (f"stagnation_episode_{episode}.csv")
 
         with path.open(
             "w",

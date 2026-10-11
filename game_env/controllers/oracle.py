@@ -1,5 +1,4 @@
-
-from game_env.controllers.action import Action
+from game_env.contracts.action import Action
 
 
 class OracleController:

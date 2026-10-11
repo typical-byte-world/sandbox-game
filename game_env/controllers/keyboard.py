@@ -1,11 +1,10 @@
 import pygame
-from game_env.controllers.action import Action
 
+from game_env.contracts.action import Action
 
 
 class KeyboardController:
-    def __init__(self):
-        ...
+    def __init__(self): ...
 
     def choose_action(self, state=None):
         keys = pygame.key.get_pressed()

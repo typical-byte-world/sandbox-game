@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=84"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alien-invasion"
+version = "0.1.0"
+description = "Space Invaders environments and reinforcement learning experiments"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==2.5.3",
+    "pygame==2.6.1",
+    "torch==2.14.1",
+    "matplotlib==3.11.2",
+    "pandas==3.0.6",
+]
+
+[project.optional-dependencies]
+dev = ["black==26.5.1", "ruff==0.15.1", "watchfiles==1.3.0"]
+
+[project.scripts]
+alien-invasion = "application.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["application*", "agents*", "game_env*", "training*"]
+
+[tool.black]
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '/(\.venv|models|results|repo_dump\.py|test\.py)/'
+
+[tool.ruff]
+target-version = "py312"
+extend-exclude = ["repo_dump.py", "test.py", "models", "results"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_regression.py" = ["E402"]
+"tests/render_probe.py" = ["E402"]

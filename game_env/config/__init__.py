@@ -1,0 +1,1 @@
+"""Configuration grouped by responsibility."""

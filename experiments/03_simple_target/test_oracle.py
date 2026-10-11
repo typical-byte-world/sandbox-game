@@ -1,9 +1,7 @@
-
 from statistics import mean
 
-from game_env.core.simple_target import SimpleTargetEnv
 from game_env.controllers.oracle import OracleController
-
+from game_env.core.simple_target import SimpleTargetEnv
 
 EPISODES = 1000
 MAX_STEPS = 100
@@ -22,9 +20,7 @@ results = []
 failures = []
 
 for episode in range(1, EPISODES + 1):
-    observation, info = env.reset(
-        seed=10000 + episode
-    )
+    observation, info = env.reset(seed=10000 + episode)
 
     initial_player_x = info["player_x"]
     initial_target_x = info["target_x"]
@@ -43,29 +39,27 @@ for episode in range(1, EPISODES + 1):
         if terminated or truncated:
             break
 
-    results.append({
-        "success": info["success"],
-        "steps": info["steps"],
-        "distance": info["distance"],
-    })
+    results.append(
+        {
+            "success": info["success"],
+            "steps": info["steps"],
+            "distance": info["distance"],
+        }
+    )
 
     if not info["success"]:
-        failures.append({
-            "episode": episode,
-            "player_x": initial_player_x,
-            "target_x": initial_target_x,
-            "final_distance": info["distance"],
-        })
+        failures.append(
+            {
+                "episode": episode,
+                "player_x": initial_player_x,
+                "target_x": initial_target_x,
+                "final_distance": info["distance"],
+            }
+        )
 
-success_rate = mean(
-    result["success"]
-    for result in results
-)
+success_rate = mean(result["success"] for result in results)
 
-average_steps = mean(
-    result["steps"]
-    for result in results
-)
+average_steps = mean(result["steps"] for result in results)
 
 print("\nORACLE EVALUATION")
 print("=" * 40)

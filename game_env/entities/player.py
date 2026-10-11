@@ -1,19 +1,20 @@
 import pygame
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
     PLAYER_COLOR,
-    PLAYER_HEIGHT,
-    PLAYER_WIDTH,
-    PLAYER_ACCELERATION,
-    PLAYER_MAX_SPEED,
-    PLAYER_DRAG,
-    PLAYER_PIXEL_SIZE,
+    WIDTH,
 )
-
+from game_env.config.physics import (
+    PLAYER_ACCELERATION,
+    PLAYER_DRAG,
+    PLAYER_HEIGHT,
+    PLAYER_MAX_SPEED,
+    PLAYER_PIXEL_SIZE,
+    PLAYER_WIDTH,
+)
 from game_env.entities.bullet import Bullet
-from game_env.pixel_art import draw_pixel_sprite, PLAYER_SPRITE
+from game_env.rendering.sprites import PLAYER_SPRITE, draw_pixel_sprite
 
 
 class Player:

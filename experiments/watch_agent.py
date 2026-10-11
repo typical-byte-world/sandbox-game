@@ -1,9 +1,7 @@
 import pygame
-import numpy as np
 
-from game_env.agent.dqn_agent import DQNAgent
+from agents.dqn_agent import DQNAgent
 from game_env.core.simple_target import SimpleTargetEnv
-
 
 WIDTH = 900
 HEIGHT = 240

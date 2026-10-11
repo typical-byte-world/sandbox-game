@@ -1,18 +1,14 @@
-
 import numpy as np
 import torch
 
-from game_env.agent.NeuralAgent import NeuralAgent
-
+from agents.neural_agent import NeuralAgent
 
 agent = NeuralAgent(
     input_size=2,
     training=False,
 )
 
-agent.load(
-    "models/simple-target/target_01.pt"
-)
+agent.load("models/simple-target/target_01.pt")
 
 agent.network.eval()
 
@@ -35,9 +31,7 @@ for state in states:
     )
 
     with torch.no_grad():
-        q_values = agent.network(
-            agent._to_tensor(observation)
-        )
+        q_values = agent.network(agent._to_tensor(observation))
 
     best_index = torch.argmax(q_values).item()
 

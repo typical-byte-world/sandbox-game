@@ -1,4 +1,3 @@
-
 from game_env.core.space_invaders import SpaceInvadersEnv
 
 
@@ -8,13 +7,8 @@ class StagnationSpaceInvadersEnv(SpaceInvadersEnv):
         max_steps=None,
         max_stagnation_steps=300,
     ):
-        if (
-            max_stagnation_steps is not None
-            and max_stagnation_steps < 1
-        ):
-            raise ValueError(
-                "max_stagnation_steps must be >= 1"
-            )
+        if max_stagnation_steps is not None and max_stagnation_steps < 1:
+            raise ValueError("max_stagnation_steps must be >= 1")
 
         self.max_stagnation_steps = max_stagnation_steps
 
@@ -36,11 +30,7 @@ class StagnationSpaceInvadersEnv(SpaceInvadersEnv):
     def step(self, action):
         previous_kills = self.stats.kills
 
-        previous_boss_health = (
-            self.boss.health
-            if self.boss is not None
-            else None
-        )
+        previous_boss_health = self.boss.health if self.boss is not None else None
 
         (
             observation,
@@ -50,19 +40,12 @@ class StagnationSpaceInvadersEnv(SpaceInvadersEnv):
             info,
         ) = super().step(action)
 
-        kills_increased = (
-            self.stats.kills > previous_kills
-        )
+        kills_increased = self.stats.kills > previous_kills
 
         boss_damaged = False
 
-        if (
-            previous_boss_health is not None
-            and self.boss is not None
-        ):
-            boss_damaged = (
-                self.boss.health < previous_boss_health
-            )
+        if previous_boss_health is not None and self.boss is not None:
+            boss_damaged = self.boss.health < previous_boss_health
 
         progress = kills_increased or boss_damaged
 
@@ -73,8 +56,7 @@ class StagnationSpaceInvadersEnv(SpaceInvadersEnv):
 
         stagnation_reached = (
             self.max_stagnation_steps is not None
-            and self.steps_since_progress
-            >= self.max_stagnation_steps
+            and self.steps_since_progress >= self.max_stagnation_steps
         )
 
         if terminated:
@@ -102,12 +84,8 @@ class StagnationSpaceInvadersEnv(SpaceInvadersEnv):
     def _extend_info(self, info):
         return {
             **info,
-            "steps_since_progress":
-                self.steps_since_progress,
-            "max_stagnation_steps":
-                self.max_stagnation_steps,
-            "stagnation_detected":
-                self.stagnation_detected,
-            "truncation_reason":
-                self.truncation_reason,
+            "steps_since_progress": self.steps_since_progress,
+            "max_stagnation_steps": self.max_stagnation_steps,
+            "stagnation_detected": self.stagnation_detected,
+            "truncation_reason": self.truncation_reason,
         }

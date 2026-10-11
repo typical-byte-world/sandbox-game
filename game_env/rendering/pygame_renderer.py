@@ -1,29 +1,23 @@
-
 import pygame
 
-from game_env.settings import (
+from agents.neural_agent import NeuralAgent
+from game_env.config.display import (
     BACKGROUND_COLOR,
-    WIDTH,
     HEIGHT,
+    WIDTH,
 )
-
-from game_env.city import City
-from game_env.hud.hud import HUD
-from game_env.hud.ai_debug import AIDebug
-from game_env.agent.NeuralAgent import NeuralAgent
+from game_env.rendering.hud.ai_debug import AIDebug
+from game_env.rendering.hud.hud import HUD
+from game_env.rendering.scenery.city import City
 
 
 class PygameRenderer:
     def __init__(self):
         pygame.init()
 
-        self.screen = pygame.display.set_mode(
-            (WIDTH, HEIGHT)
-        )
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-        pygame.display.set_caption(
-            "Space Invaders AI"
-        )
+        pygame.display.set_caption("Space Invaders AI")
 
         self.city = City()
         self.hud = HUD()

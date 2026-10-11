@@ -1,29 +1,28 @@
-
 from dataclasses import dataclass
 
 import numpy as np
 
-from game_env.settings import (
-    WIDTH,
+from game_env.config.display import (
     HEIGHT,
-    PLAYER_MAX_SPEED,
-    PLAYER_ACCELERATION,
-    BOSS_MAX_SPEED,
+    WIDTH,
+)
+from game_env.config.physics import (
     BOSS_DASH_SPEED,
-    BOSS_ACCELERATION,
-    ENEMY_BULLET_SPEED,
+    BOSS_MAX_SPEED,
     BULLET_SPEED,
+    DODGER_MAX_SPEED,
+    ENEMY_BULLET_SPEED,
+    KAMIKAZE_MAX_SPEED,
+    PLAYER_ACCELERATION,
+    PLAYER_MAX_SPEED,
     SCOUT_MAX_SPEED,
     SHOOTER_MAX_SPEED,
-    KAMIKAZE_MAX_SPEED,
-    DODGER_MAX_SPEED,
     TACTICAL_MAX_SPEED,
 )
-
+from game_env.entities.enemies.dodger import Dodger
+from game_env.entities.enemies.kamikaze import Kamikaze
 from game_env.entities.enemies.scout import Scout
 from game_env.entities.enemies.shooter import Shooter
-from game_env.entities.enemies.kamikaze import Kamikaze
-from game_env.entities.enemies.dodger import Dodger
 from game_env.entities.enemies.tactical import Tactical
 
 
@@ -57,13 +56,16 @@ class FullStateObservation:
     def __init__(self, config=None):
         self.config = config or ObservationConfig()
 
-        self.max_enemy_speed = max(
-            SCOUT_MAX_SPEED,
-            SHOOTER_MAX_SPEED,
-            KAMIKAZE_MAX_SPEED * 1.5,
-            DODGER_MAX_SPEED,
-            TACTICAL_MAX_SPEED,
-        ) * 2.0
+        self.max_enemy_speed = (
+            max(
+                SCOUT_MAX_SPEED,
+                SHOOTER_MAX_SPEED,
+                KAMIKAZE_MAX_SPEED * 1.5,
+                DODGER_MAX_SPEED,
+                TACTICAL_MAX_SPEED,
+            )
+            * 2.0
+        )
 
         self.max_boss_speed = max(
             BOSS_MAX_SPEED,
@@ -82,9 +84,7 @@ class FullStateObservation:
     def get_vector(self, env):
         features = []
 
-        features.extend(
-            self._encode_player(env)
-        )
+        features.extend(self._encode_player(env))
 
         features.extend(
             self._encode_collection(
@@ -131,9 +131,7 @@ class FullStateObservation:
             )
         )
 
-        features.extend(
-            self._encode_global(env)
-        )
+        features.extend(self._encode_global(env))
 
         vector = np.asarray(
             features,
@@ -147,9 +145,7 @@ class FullStateObservation:
             )
 
         if not np.all(np.isfinite(vector)):
-            raise ValueError(
-                "Observation contains NaN or infinity."
-            )
+            raise ValueError("Observation contains NaN or infinity.")
 
         return vector
 
@@ -159,42 +155,29 @@ class FullStateObservation:
         return [
             player.position.x / WIDTH,
             player.position.y / HEIGHT,
-
             player.velocity.x / PLAYER_MAX_SPEED,
             player.velocity.y / PLAYER_MAX_SPEED,
-
             player.acceleration.x / PLAYER_ACCELERATION,
             player.acceleration.y / PLAYER_ACCELERATION,
-
             player.rect.width / WIDTH,
             player.rect.height / HEIGHT,
-
             player.shoot_cooldown / player.shoot_delay,
-
             env.stats.lives / self.config.max_lives,
         ]
 
     def _encode_enemy(self, enemy, player):
-        enemy_type = [
-            float(isinstance(enemy, cls))
-            for cls in self.ENEMY_TYPES
-        ]
+        enemy_type = [float(isinstance(enemy, cls)) for cls in self.ENEMY_TYPES]
 
         return [
             1.0,
-
             enemy.position.x / WIDTH,
             enemy.position.y / HEIGHT,
-
             (enemy.position.x - player.position.x) / WIDTH,
             (enemy.position.y - player.position.y) / HEIGHT,
-
             enemy.rect.width / WIDTH,
             enemy.rect.height / HEIGHT,
-
             enemy.velocity.x / self.max_enemy_speed,
             enemy.velocity.y / self.max_enemy_speed,
-
             *enemy_type,
         ]
 
@@ -206,16 +189,12 @@ class FullStateObservation:
     ):
         return [
             1.0,
-
             bullet.position.x / WIDTH,
             bullet.position.y / HEIGHT,
-
             (bullet.position.x - player.position.x) / WIDTH,
             (bullet.position.y - player.position.y) / HEIGHT,
-
             bullet.rect.width / WIDTH,
             bullet.rect.height / HEIGHT,
-
             bullet.velocity.x / max_speed,
             bullet.velocity.y / max_speed,
         ]
@@ -226,31 +205,22 @@ class FullStateObservation:
 
         return [
             1.0,
-
             boss.position.x / WIDTH,
             boss.position.y / HEIGHT,
-
             (boss.position.x - player.position.x) / WIDTH,
             (boss.position.y - player.position.y) / HEIGHT,
-
             boss.rect.width / WIDTH,
             boss.rect.height / HEIGHT,
-
             boss.velocity.x / self.max_boss_speed,
             boss.velocity.y / self.max_boss_speed,
-
             boss.health / boss.max_health,
         ]
 
     def _encode_global(self, env):
         return [
             env.stats.wave / self.config.max_waves,
-
             len(env.enemies) / self.config.max_enemies,
-
-            len(env.enemy_bullets)
-            / self.config.max_enemy_bullets,
-
+            len(env.enemy_bullets) / self.config.max_enemy_bullets,
             env.steps / self.config.max_episode_steps,
         ]
 
@@ -262,10 +232,7 @@ class FullStateObservation:
         encoder,
     ):
         if len(objects) > max_count:
-            raise ValueError(
-                f"Object limit exceeded: "
-                f"{len(objects)} > {max_count}"
-            )
+            raise ValueError(f"Object limit exceeded: " f"{len(objects)} > {max_count}")
 
         ordered = sorted(
             objects,
@@ -282,16 +249,13 @@ class FullStateObservation:
 
             if len(encoded) != feature_count:
                 raise ValueError(
-                    f"Expected {feature_count} features, "
-                    f"got {len(encoded)}."
+                    f"Expected {feature_count} features, " f"got {len(encoded)}."
                 )
 
             features.extend(encoded)
 
         missing = max_count - len(ordered)
 
-        features.extend(
-            [0.0] * (missing * feature_count)
-        )
+        features.extend([0.0] * (missing * feature_count))
 
         return features

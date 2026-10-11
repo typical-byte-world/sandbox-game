@@ -1,5 +1,5 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 path = "results/simple-target/dqn/dqn_n5_train.csv"
 
@@ -8,22 +8,12 @@ df = pd.read_csv(path)
 window = 100
 
 df["success_rate"] = (
-    df["success"].astype(int)
-    .rolling(window, min_periods=1)
-    .mean() * 100
+    df["success"].astype(int).rolling(window, min_periods=1).mean() * 100
 )
 
-df["avg_reward"] = (
-    df["total_reward"]
-    .rolling(window, min_periods=1)
-    .mean()
-)
+df["avg_reward"] = df["total_reward"].rolling(window, min_periods=1).mean()
 
-df["avg_steps"] = (
-    df["steps"]
-    .rolling(window, min_periods=1)
-    .mean()
-)
+df["avg_steps"] = df["steps"].rolling(window, min_periods=1).mean()
 
 fig, axes = plt.subplots(3, 1, figsize=(12, 10))
 
