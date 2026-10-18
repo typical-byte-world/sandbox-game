@@ -18,7 +18,8 @@ class ExperimentConfig:
     n_steps: int = 5
     max_stagnation_steps: int | None = 300
     debug_last_steps: int = 30
-
+    double_dqn: bool = False
+    
     def __post_init__(self):
         if self.mode not in {"train", "evaluate", "random"}:
             raise ValueError(f"Unknown mode: {self.mode}")

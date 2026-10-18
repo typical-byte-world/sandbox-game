@@ -1,8 +1,11 @@
 # Alien Invasion
 
 Експериментальний Space Invaders, у якому поступово будується AI-агент і досліджується, як він навчається грати.
+![Demo1](files/space_invaders.png)
 
-![Demo](files/demo.png)
+---
+
+![Demo2](files/demo.png)
 
 
 ## План

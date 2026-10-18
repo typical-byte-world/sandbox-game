@@ -66,6 +66,8 @@ class PygameRenderer:
                 agent,
             )
 
+        self.draw_hitboxes(env)
+
         pygame.display.flip()
 
     def handle_events(self):
@@ -77,3 +79,33 @@ class PygameRenderer:
 
     def close(self):
         pygame.quit()
+
+
+    def draw_hitboxes(self, env):
+        entities = (
+            [env.player]
+            + env.enemies
+            + env.bullets
+            + env.enemy_bullets
+        )
+
+        if env.boss is not None:
+            entities.append(env.boss)
+
+        for entity in entities:
+            pygame.draw.rect(
+                self.screen,
+                (255, 60, 60),
+                entity.rect,
+                width=1,
+            )
+
+            pygame.draw.circle(
+                self.screen,
+                (255, 220, 0),
+                (
+                    int(entity.position.x),
+                    int(entity.position.y),
+                ),
+                3,
+            )

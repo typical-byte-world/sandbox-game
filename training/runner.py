@@ -1,3 +1,4 @@
+
 """Coordinate episode execution, learning, rendering, and reporting."""
 
 import random
@@ -16,7 +17,11 @@ from training.factories import (
     create_renderer,
 )
 from training.paths import ExperimentPaths
-from training.reporting import make_result, print_summary, save_results
+from training.reporting import (
+    make_result,
+    print_summary,
+    save_results,
+)
 
 
 class ExperimentRunner:
@@ -35,6 +40,7 @@ class ExperimentRunner:
         n_steps=5,
         max_stagnation_steps=300,
         debug_last_steps=30,
+        double_dqn=False,
     ):
         self.config = ExperimentConfig(
             mode=mode,
@@ -50,7 +56,9 @@ class ExperimentRunner:
             n_steps=n_steps,
             max_stagnation_steps=max_stagnation_steps,
             debug_last_steps=debug_last_steps,
+            double_dqn=double_dqn
         )
+
         self.mode = self.config.mode
         self.environment = self.config.environment
         self.episodes = self.config.episodes
@@ -62,8 +70,11 @@ class ExperimentRunner:
         self.shaping_scale = self.config.shaping_scale
         self.agent_type = self.config.agent_type
         self.n_steps = self.config.n_steps
-        self.max_stagnation_steps = self.config.max_stagnation_steps
+        self.max_stagnation_steps = (
+            self.config.max_stagnation_steps
+        )
         self.debug_last_steps = self.config.debug_last_steps
+        self.double_dqn = self.config.double_dqn
 
         random.seed(seed)
         np.random.seed(seed)
@@ -75,10 +86,15 @@ class ExperimentRunner:
         self.input_size = len(observation)
 
         paths = ExperimentPaths.for_experiment(
-            environment, agent_type, experiment_name, mode
+            environment,
+            agent_type,
+            experiment_name,
+            mode,
         )
+
         self.model_path = paths.model
         self.results_path = paths.results
+
         paths.create_directories()
 
     def _create_environment(self):
@@ -98,6 +114,7 @@ class ExperimentRunner:
             model_path=self.model_path,
             n_steps=self.n_steps,
             seed=self.seed,
+            double_dqn=self.double_dqn,
         )
 
     def _create_renderer(self):
@@ -161,7 +178,15 @@ class ExperimentRunner:
         renderer.render(self.env, agent)
         return True
 
-    def _make_result(self, episode, steps, total_reward, terminated, truncated, info):
+    def _make_result(
+        self,
+        episode,
+        steps,
+        total_reward,
+        terminated,
+        truncated,
+        info,
+    ):
         return make_result(
             episode=episode,
             steps=steps,
@@ -192,9 +217,19 @@ class ExperimentRunner:
             results_path=self.results_path,
         )
 
-    def _run_episode(self, episode, agent, renderer, debugger, clock):
+    def _run_episode(
+        self,
+        episode,
+        agent,
+        renderer,
+        debugger,
+        clock,
+    ):
         interrupted = False
-        observation, info = self.env.reset(seed=self.seed + episode)
+
+        observation, info = self.env.reset(
+            seed=self.seed + episode
+        )
 
         if isinstance(agent, DQNAgent):
             agent.reset_episode()
@@ -230,6 +265,18 @@ class ExperimentRunner:
                 info,
             ) = self.env.step(action)
 
+            # Diagnose what happened after the action.
+            if debugger is not None:
+                debug_paths = debugger.after_step(
+                    self.env,
+                    episode + 1,
+                )
+
+                for debug_path in debug_paths:
+                    print(
+                        f"Diagnostic trajectory: {debug_path}"
+                    )
+
             self._train_agent(
                 agent=agent,
                 observation=observation,
@@ -263,14 +310,25 @@ class ExperimentRunner:
             truncated=truncated,
             info=info,
         )
-        return result, info, interrupted, steps, total_reward
+
+        return (
+            result,
+            info,
+            interrupted,
+            steps,
+            total_reward,
+        )
 
     def run(self):
         agent = self._create_agent()
         renderer = self._create_renderer()
         debugger = self._create_debugger()
 
-        clock = pygame.time.Clock() if renderer is not None else None
+        clock = (
+            pygame.time.Clock()
+            if renderer is not None
+            else None
+        )
 
         results = []
         interrupted = False
@@ -278,31 +336,51 @@ class ExperimentRunner:
         print("=" * 60)
         print("START EXPERIMENT")
         print("=" * 60)
+
         print(f"Environment: {self.environment}")
         print(f"Mode: {self.mode}")
         print(f"Agent: {self.agent_type}")
         print(f"N-steps: {self.n_steps}")
         print(f"Episodes: {self.episodes}")
         print(f"Max steps: {self.max_steps}")
-        print(f"Max stagnation steps: {self.max_stagnation_steps}")
+        print(
+            f"Max stagnation steps: "
+            f"{self.max_stagnation_steps}"
+        )
         print(f"Input size: {self.input_size}")
         print(f"Seed: {self.seed}")
+
         print("=" * 60)
 
         try:
             for episode in range(self.episodes):
-                result, info, interrupted, steps, total_reward = self._run_episode(
-                    episode, agent, renderer, debugger, clock
+                (
+                    result,
+                    info,
+                    interrupted,
+                    steps,
+                    total_reward,
+                ) = self._run_episode(
+                    episode,
+                    agent,
+                    renderer,
+                    debugger,
+                    clock,
                 )
 
                 if (
                     debugger is not None
-                    and info.get("truncation_reason") == "stagnation"
+                    and info.get("truncation_reason")
+                    == "stagnation"
                 ):
-                    path = debugger.save(episode=episode + 1)
+                    path = debugger.save(
+                        episode=episode + 1
+                    )
 
                     if path is not None:
-                        print(f"Stagnation trajectory: {path}")
+                        print(
+                            f"Stagnation trajectory: {path}"
+                        )
 
                 results.append(result)
 
@@ -314,21 +392,26 @@ class ExperimentRunner:
                     )
 
                     print(
-                        f"Episode {episode + 1}/{self.episodes} | "
+                        f"Episode {episode + 1}/"
+                        f"{self.episodes} | "
                         f"Reward: {total_reward:.2f} | "
                         f"Steps: {steps} | "
                         f"Epsilon: {agent.epsilon:.4f} | "
                         f"Loss: {loss_text} | "
-                        f"Buffer: {len(agent.replay_buffer)} | "
-                        f"Reason: {info.get('truncation_reason')}"
+                        f"Buffer: "
+                        f"{len(agent.replay_buffer)} | "
+                        f"Reason: "
+                        f"{info.get('truncation_reason')}"
                     )
 
                 else:
                     print(
-                        f"Episode {episode + 1}/{self.episodes} | "
+                        f"Episode {episode + 1}/"
+                        f"{self.episodes} | "
                         f"Reward: {total_reward:.2f} | "
                         f"Steps: {steps} | "
-                        f"Reason: {info.get('truncation_reason')}"
+                        f"Reason: "
+                        f"{info.get('truncation_reason')}"
                     )
 
                 if interrupted:

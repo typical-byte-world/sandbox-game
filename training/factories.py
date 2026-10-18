@@ -29,7 +29,7 @@ def create_environment(
     )
 
 
-def create_agent(agent_type, input_size, mode, model_path, n_steps, seed):
+def create_agent(agent_type, input_size, mode, model_path, n_steps, seed, double_dqn):
     if mode == "random":
         return RandomController()
     if agent_type == "dqn":
@@ -39,6 +39,7 @@ def create_agent(agent_type, input_size, mode, model_path, n_steps, seed):
             n_steps=n_steps,
             gamma=GAMMA,
             seed=seed,
+            double_dqn=double_dqn,
         )
     else:
         agent = NeuralAgent(input_size=input_size, training=mode == "train")

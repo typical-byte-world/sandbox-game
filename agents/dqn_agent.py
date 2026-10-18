@@ -28,6 +28,7 @@ class DQNAgent:
         epsilon_decay_steps=50_000,
         seed=42,
         device="cpu",
+        double_dqn=False,
     ):
         self.training = training
         self.gamma = gamma
@@ -74,6 +75,8 @@ class DQNAgent:
         self.environment_steps = 0
         self.gradient_steps = 0
         self.last_loss = None
+
+        self.double_dqn = double_dqn
 
     @property
     def epsilon(self):
@@ -168,7 +171,18 @@ class DQNAgent:
         )
 
         with torch.no_grad():
-            next_q = self.target_network(next_states).max(dim=1).values
+            if self.double_dqn:
+                next_actions = self.policy_network(next_states).argmax(
+                    dim=1,
+                    keepdim=True,
+                )
+
+                next_q = self.target_network(next_states).gather(
+                    1,
+                    next_actions,
+                ).squeeze(1)
+            else:
+                next_q = self.target_network(next_states).max(dim=1).values
 
             discounts = torch.pow(
                 torch.full_like(n_steps, self.gamma),

@@ -1,3 +1,7 @@
+import os
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+
 import argparse
 
 from training.runner import ExperimentRunner
@@ -72,6 +76,11 @@ def main(argv=None):
     )
 
     parser.add_argument(
+        "--double-dqn",
+        action="store_true",
+    )
+
+    parser.add_argument(
         "--n-steps",
         type=int,
         default=5,
@@ -90,6 +99,8 @@ def main(argv=None):
         shaping_scale=args.shaping_scale,
         agent_type=args.agent,
         n_steps=args.n_steps,
+        double_dqn=args.double_dqn,
+
     )
 
     runner.run()
